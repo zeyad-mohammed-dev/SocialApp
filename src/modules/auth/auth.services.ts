@@ -1,12 +1,14 @@
 import type {Request, Response } from 'express';
 import { BadRequestException } from '../../utils/response/error.response';
+import type{ ISignupBodyInputsDTO } from './auth.dto';
 
 class AuthenticationService {
   constructor() {}
 
   signup = (req: Request, res: Response ):Response => {
-    throw new BadRequestException("Fail" , {extra : "We...."})
-    res.status(201).json({ message: 'Done', data: req.body });
+    let {name , email}:ISignupBodyInputsDTO = req.body
+    console.log({name , email});
+    return res.status(201).json({ message: 'Done', data: req.body });
   };
 
   login = (req: Request, res: Response) => {
