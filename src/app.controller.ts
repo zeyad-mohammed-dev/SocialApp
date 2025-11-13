@@ -2,8 +2,7 @@
 // 🌟 Core Imports
 // ===============================
 import express from 'express';
-import type { Express, Request, Response } from 'express';
-
+import type { Express, NextFunction, Request, Response } from 'express';
 
 // ===============================
 // 🛡️ Security & Middleware Packages
@@ -12,15 +11,14 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 
-
 // ===============================
 // ⚙️ Environment Configuration
 // ===============================
 import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import authRouter from './modules/auth/auth.controller';
+import { globalErrorHandling } from './utils/response/error.response';
 config({ path: resolve('./config/.env.development') });
-
 
 // ===============================
 // 🚦 Rate Limiter Setup
@@ -32,14 +30,12 @@ const limiter = rateLimit({
   statusCode: 429,
 });
 
-
 // ===============================
 // 🚀 Application Bootstrap
 // ===============================
 const bootstrap = (): void => {
   const app: Express = express();
   const port: string | number = process.env.PORT || 5000;
-
 
   // ===============================
   // 🧰 Global Middlewares
@@ -48,7 +44,6 @@ const bootstrap = (): void => {
   app.use(cors());
   app.use(helmet());
   app.use(limiter);
-
 
   // ===============================
   // 🏠 Root Route (Landing Page)
@@ -59,20 +54,22 @@ const bootstrap = (): void => {
     });
   });
 
-
   // ===============================
   // 🔐 App Routers
   // ===============================
   app.use('/auth', authRouter);
 
-
   // ===============================
   // ❌ Invalid Route Handler (Fallback)
   // ===============================
-  app.use('*', (req: Request, res: Response) => {
+  app.use('{/*dummy}', (req: Request, res: Response) => {
     return res.status(404).json({ message: '❌ Not valid routing, please check the method and URL.' });
   });
 
+  // ===============================
+  // ❌ Global Error Handler
+  // ===============================
+  app.use(globalErrorHandling);
 
   // ===============================
   // 📡 Start Server
@@ -81,7 +78,6 @@ const bootstrap = (): void => {
     console.log(`🚀 Server is running on port :::${port}`);
   });
 };
-
 
 // ===============================
 // 📦 Export Bootstrap Function

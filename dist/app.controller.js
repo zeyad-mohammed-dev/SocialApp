@@ -10,6 +10,7 @@ const express_rate_limit_1 = require("express-rate-limit");
 const dotenv_1 = require("dotenv");
 const node_path_1 = require("node:path");
 const auth_controller_1 = __importDefault(require("./modules/auth/auth.controller"));
+const error_response_1 = require("./utils/response/error.response");
 (0, dotenv_1.config)({ path: (0, node_path_1.resolve)('./config/.env.development') });
 const limiter = (0, express_rate_limit_1.rateLimit)({
     windowMs: 60 * 60000,
@@ -30,9 +31,10 @@ const bootstrap = () => {
         });
     });
     app.use('/auth', auth_controller_1.default);
-    app.use('*', (req, res) => {
+    app.use('{/*dummy}', (req, res) => {
         return res.status(404).json({ message: '❌ Not valid routing, please check the method and URL.' });
     });
+    app.use(error_response_1.globalErrorHandling);
     app.listen(port, () => {
         console.log(`🚀 Server is running on port :::${port}`);
     });
