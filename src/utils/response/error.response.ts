@@ -25,9 +25,10 @@ export class NotFoundException extends ApplicationException {
 }
 
 export const globalErrorHandling = (error: IError, req: Request, res: Response, next: NextFunction) => {
+  process.env.MOOD === 'development' ? console.log(error.stack) : undefined;
+
   return res.status(error.statusCode || 500).json({
     error_message: error.message || '❌ something went wrong !',
-    stack: process.env.MOOD === 'development' ? error.stack : undefined,
     cause: error.cause,
     error,
   });
