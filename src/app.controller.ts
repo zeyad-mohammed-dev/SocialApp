@@ -2,7 +2,7 @@
 // 🌟 Core Imports
 // ===============================
 import express from 'express';
-import type { Express, NextFunction, Request, Response } from 'express';
+import type { Express, Request, Response } from 'express';
 
 // ===============================
 // 🛡️ Security & Middleware Packages
@@ -18,6 +18,7 @@ import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import authRouter from './modules/auth/auth.controller';
 import { globalErrorHandling } from './utils/response/error.response';
+import connectDB from './DB/connection.db';
 config({ path: resolve('./config/.env.development') });
 
 // ===============================
@@ -33,7 +34,7 @@ const limiter = rateLimit({
 // ===============================
 // 🚀 Application Bootstrap
 // ===============================
-const bootstrap = (): void => {
+const bootstrap = async (): Promise<void> => {
   const app: Express = express();
   const port: string | number = process.env.PORT || 5000;
 
@@ -50,7 +51,7 @@ const bootstrap = (): void => {
   // ===============================
   app.get('/', (req: Request, res: Response) => {
     res.json({
-      message: `❤🍀 Welcome to ${process.env.APPLICATION_NAME} backend landing page`,
+      message: `Welcome to ${process.env.APPLICATION_NAME} backend landing page ❤🍀 `,
     });
   });
 
@@ -71,11 +72,14 @@ const bootstrap = (): void => {
   // ===============================
   app.use(globalErrorHandling);
 
+  // 📂 DataBase
+  await connectDB();
+
   // ===============================
   // 📡 Start Server
   // ===============================
   app.listen(port, () => {
-    console.log(`🚀 Server is running on port :::${port}`);
+    console.log(`Server is running on port :::${port} 🚀`);
   });
 };
 
