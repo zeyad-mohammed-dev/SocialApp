@@ -24,12 +24,16 @@ export class NotFoundException extends ApplicationException {
   }
 }
 
-export const globalErrorHandling = (error: IError, req: Request, res: Response, next: NextFunction) => {
-  process.env.MOOD === 'development' ? console.log(error.stack) : undefined;
-
+export const globalErrorHandling = (
+  error: IError,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   return res.status(error.statusCode || 500).json({
     error_message: error.message || '❌ something went wrong !',
     cause: error.cause,
+    stack: process.env.MOOD === 'development' ? error.stack : undefined,
     error,
   });
 };

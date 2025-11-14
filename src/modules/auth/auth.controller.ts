@@ -4,7 +4,7 @@ import authServices from './auth.services';
 import { Router } from 'express';
 const router = Router();
 
-router.post('/signup', authServices.signup);
-router.post('/login', authServices.login);
+router.post('/signup', validation(validators.signup), authServices.signup);
+router.post('/login', validation(validators.login), authServices.login);
 
 export default router;

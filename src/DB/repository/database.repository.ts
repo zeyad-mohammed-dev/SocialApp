@@ -1,6 +1,6 @@
 import { CreateOptions, HydratedDocument, Model } from 'mongoose';
 
-export class DatabaseRepository<TDocument> {
+export abstract class DatabaseRepository<TDocument> {
   constructor(protected readonly model: Model<TDocument>) {}
 
   async create({
@@ -8,9 +8,8 @@ export class DatabaseRepository<TDocument> {
     options,
   }: {
     data: Partial<TDocument>[];
-    options?: CreateOptions;
+    options?: CreateOptions | undefined;
   }): Promise<HydratedDocument<TDocument>[] | undefined> {
-    return await this.model.create(data,options);
+    return await this.model.create(data, options);
   }
-  
 }
