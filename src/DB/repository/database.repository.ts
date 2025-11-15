@@ -1,4 +1,9 @@
 import {
+  MongooseUpdateQueryOptions,
+  UpdateQuery,
+  UpdateWriteOpResult,
+} from 'mongoose';
+import {
   CreateOptions,
   FlattenMaps,
   HydratedDocument,
@@ -29,7 +34,7 @@ export abstract class DatabaseRepository<TDocument> {
     }
     if (options?.lean) {
       doc.lean(options.lean);
-    } 
+    }
     return await doc.exec();
   }
 
@@ -41,5 +46,21 @@ export abstract class DatabaseRepository<TDocument> {
     options?: CreateOptions | undefined;
   }): Promise<HydratedDocument<TDocument>[] | undefined> {
     return await this.model.create(data, options);
+  }
+
+  async updateOne({
+    filter,
+    update,
+    options,
+  }: {
+    filter: RootFilterQuery<TDocument>;
+    update: UpdateQuery<TDocument>;
+    options?: MongooseUpdateQueryOptions<TDocument> | null;
+  }): Promise<UpdateWriteOpResult> {
+    return this.model.updateOne(
+      filter,
+      { ...update, $inc: { __v: 1 } },
+      options
+    );
   }
 }

@@ -1,12 +1,20 @@
 import type { Request, Response } from 'express';
-import type { ISignupBodyInputsDTO } from './auth.dto';
+import type {
+  IConfirmEmailBodyInputsDTO,
+  ILoginBodyInputsDTO,
+  ISignupBodyInputsDTO,
+} from './auth.dto';
 import { UserModel } from '../../DB/models/user.model';
 import { UserRepository } from '../../DB/repository/user.repository';
-import { ConflictException } from '../../utils/response/error.response';
-import { generateHash } from '../../utils/security/hash.security';
-import { sendEmail } from '../../utils/email/send.email';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '../../utils/response/error.response';
+import { compareHash, generateHash } from '../../utils/security/hash.security';
 import { emailEvent } from '../../utils/event/email.event';
-import { generateNumberOtp } from '../../utils/otp';
+import { generateNumberOtp } from '../../utils/helpers/otp';
+import { generateToken } from '../../utils/security/token.security';
 
 class AuthenticationService {
   private userModel = new UserRepository(UserModel);
@@ -43,8 +51,65 @@ class AuthenticationService {
     return res.status(201).json({ message: 'Done', data: { user } });
   };
 
-  login = (req: Request, res: Response) => {
-    res.json({ message: 'Done', data: req.body });
+  confirmEmail = async (req: Request, res: Response): Promise<Response> => {
+    const { email, otp }: IConfirmEmailBodyInputsDTO = req.body;
+
+    const user = await this.userModel.findOne({
+      filter: {
+        email,
+        confirmEmailOtp: { $exists: true },
+        confirmedAt: { $exists: false },
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Invalid email or already confirmed');
+    }
+
+    if (!(await compareHash(otp, user.confirmEmailOtp as string))) {
+      throw new ConflictException('Invalid OTP');
+    }
+
+    await this.userModel.updateOne({
+      filter: { email },
+      update: {
+        confirmedAt: new Date(),
+        $unset: { confirmEmailOtp: 1 },
+      },
+    });
+
+    return res.json({ message: 'Done' });
+  };
+
+  login = async (req: Request, res: Response): Promise<Response> => {
+    const { email, password }: ILoginBodyInputsDTO = req.body;
+
+    const user = await this.userModel.findOne({
+      filter: { email },
+    });
+    if (!user) {
+      throw new NotFoundException('Invalid credentials');
+    }
+    if (!user.confirmedAt) {
+      throw new BadRequestException('Please confirm your email before login');
+    }
+    if (!(await compareHash(password, user.password))) {
+      throw new BadRequestException('Invalid credentials');
+    }
+
+    const access_token = await generateToken({
+      payload: { _id: user._id },
+    });
+    const refresh_token = await generateToken({
+      payload: { _id: user._id },
+      secret: process.env.REFRESH_USER_TOKEN_SIGNATURE as string,
+      options: { expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRED_IN) },
+    });
+
+    return res.json({
+      message: 'Done',
+      data: { credentials: { access_token, refresh_token } },
+    });
   };
 }
 

@@ -34,4 +34,5 @@ exports.generalFields = {
     email: zod_1.z.email({ error: 'valid email must be like to example@domain.com' }),
     password: zod_1.z.string().regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/),
     confirmPassword: zod_1.z.string(),
+    otp: zod_1.z.string().regex(/^[0-9]{6}$/, "Invalid OTP format")
 };

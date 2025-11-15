@@ -42,5 +42,6 @@ const auth_services_1 = __importDefault(require("./auth.services"));
 const express_1 = require("express");
 const router = (0, express_1.Router)();
 router.post('/signup', (0, validation_middleware_1.validation)(validators.signup), auth_services_1.default.signup);
+router.patch('/confirm-email', (0, validation_middleware_1.validation)(validators.confirmEmail), auth_services_1.default.confirmEmail);
 router.post('/login', (0, validation_middleware_1.validation)(validators.login), auth_services_1.default.login);
 exports.default = router;
