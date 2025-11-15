@@ -18,7 +18,7 @@ export interface IUser {
   userName?: string;
 
   email: string;
-  confirmEmailOTP?: string;
+  confirmEmailOtp?: string;
   confirmedAt?: Date;
 
   password: string;
@@ -41,7 +41,7 @@ const userSchema = new Schema<IUser>(
     lastName: { type: String, required: true, minlength: 3, maxlength: 30 },
 
     email: { type: String, required: true, unique: true },
-    confirmEmailOTP: { type: String },
+    confirmEmailOtp: { type: String },
     confirmedAt: { type: Date },
 
     password: { type: String, required: true },

@@ -16,7 +16,7 @@ const userSchema = new mongoose_1.Schema({
     firstName: { type: String, required: true, minlength: 3, maxlength: 30 },
     lastName: { type: String, required: true, minlength: 3, maxlength: 30 },
     email: { type: String, required: true, unique: true },
-    confirmEmailOTP: { type: String },
+    confirmEmailOtp: { type: String },
     confirmedAt: { type: Date },
     password: { type: String, required: true },
     resetPassword: { type: String },
