@@ -1,7 +1,37 @@
-import { CreateOptions, HydratedDocument, Model } from 'mongoose';
+import {
+  CreateOptions,
+  FlattenMaps,
+  HydratedDocument,
+  Model,
+  PopulateOptions,
+  ProjectionType,
+  QueryOptions,
+  RootFilterQuery,
+} from 'mongoose';
+
+export type Lean<T> = HydratedDocument<FlattenMaps<T>>;
 
 export abstract class DatabaseRepository<TDocument> {
   constructor(protected readonly model: Model<TDocument>) {}
+
+  async findOne({
+    filter,
+    select,
+    options,
+  }: {
+    filter?: RootFilterQuery<TDocument>;
+    select?: ProjectionType<TDocument> | null;
+    options?: QueryOptions<TDocument> | null;
+  }): Promise<Lean<TDocument> | HydratedDocument<TDocument> | null> {
+    const doc = this.model.findOne(filter).select(select || '');
+    if (options?.populate) {
+      doc.populate(options.populate as PopulateOptions[]);
+    }
+    if (options?.lean) {
+      doc.lean(options.lean);
+    } 
+    return await doc.exec();
+  }
 
   async create({
     data,

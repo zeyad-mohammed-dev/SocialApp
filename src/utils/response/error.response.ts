@@ -5,7 +5,11 @@ export interface IError extends Error {
 }
 
 export class ApplicationException extends Error {
-  constructor(message: string, public statusCode: Number = 400, cause?: unknown) {
+  constructor(
+    message: string,
+    public statusCode: Number = 400,
+    cause?: unknown
+  ) {
     super(message, { cause });
     this.name = this.constructor.name;
     Error.captureStackTrace(this, this.constructor);
@@ -21,6 +25,12 @@ export class BadRequestException extends ApplicationException {
 export class NotFoundException extends ApplicationException {
   constructor(message: string, cause?: unknown) {
     super(message, 404, cause);
+  }
+}
+
+export class ConflictException extends ApplicationException {
+  constructor(message: string, cause?: unknown) {
+    super(message, 409, cause);
   }
 }
 
