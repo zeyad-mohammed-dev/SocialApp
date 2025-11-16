@@ -72,17 +72,10 @@ class AuthenticationService {
         if (!(await (0, hash_security_1.compareHash)(password, user.password))) {
             throw new error_response_1.BadRequestException('Invalid credentials');
         }
-        const access_token = await (0, token_security_1.generateToken)({
-            payload: { _id: user._id },
-        });
-        const refresh_token = await (0, token_security_1.generateToken)({
-            payload: { _id: user._id },
-            secret: process.env.REFRESH_USER_TOKEN_SIGNATURE,
-            options: { expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRED_IN) },
-        });
+        const credentials = await (0, token_security_1.createLoginCredentials)(user);
         return res.json({
             message: 'Done',
-            data: { credentials: { access_token, refresh_token } },
+            data: { credentials },
         });
     };
 }

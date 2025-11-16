@@ -14,7 +14,7 @@ import {
 import { compareHash, generateHash } from '../../utils/security/hash.security';
 import { emailEvent } from '../../utils/event/email.event';
 import { generateNumberOtp } from '../../utils/helpers/otp';
-import { generateToken } from '../../utils/security/token.security';
+import { createLoginCredentials } from '../../utils/security/token.security';
 
 class AuthenticationService {
   private userModel = new UserRepository(UserModel);
@@ -97,18 +97,11 @@ class AuthenticationService {
       throw new BadRequestException('Invalid credentials');
     }
 
-    const access_token = await generateToken({
-      payload: { _id: user._id },
-    });
-    const refresh_token = await generateToken({
-      payload: { _id: user._id },
-      secret: process.env.REFRESH_USER_TOKEN_SIGNATURE as string,
-      options: { expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRED_IN) },
-    });
+    const credentials = await createLoginCredentials(user);
 
     return res.json({
       message: 'Done',
-      data: { credentials: { access_token, refresh_token } },
+      data: { credentials },
     });
   };
 }
