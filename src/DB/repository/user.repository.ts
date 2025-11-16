@@ -1,5 +1,5 @@
 import { DatabaseRepository } from './database.repository';
-import { IUser as TDocument } from '../../DB/models/user.model';
+import { IUser as TDocument } from '../models/User.model';
 import { Model } from 'mongoose';
 import { CreateOptions } from 'mongoose';
 import { HydratedDocument } from 'mongoose';

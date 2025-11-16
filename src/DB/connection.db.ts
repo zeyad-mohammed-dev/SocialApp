@@ -1,6 +1,6 @@
 import { connect } from 'mongoose';
 import { log } from 'node:console';
-import { UserModel } from './models/user.model';
+import { UserModel } from './models/User.model';
 
 const connectDB = async (): Promise<void> => {
   try {

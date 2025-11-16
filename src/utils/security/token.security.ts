@@ -1,11 +1,14 @@
+import { v4 as uuid } from 'uuid';
 import type { JwtPayload, Secret, SignOptions } from 'jsonwebtoken';
 import { decode, sign, verify } from 'jsonwebtoken';
-import { HUserDocument, RoleEnum, UserModel } from '../../DB/models/user.model';
+import { HUserDocument, RoleEnum, UserModel } from '../../DB/models/User.model';
 import {
   BadRequestException,
   UnauthorizedException,
 } from '../response/error.response';
 import { UserRepository } from '../../DB/repository/user.repository';
+import { TokenRepository } from '../../DB/repository/token.repository';
+import { TokenModel } from '../../DB/models/Token.model';
 
 export enum SignatureLevelEnum {
   Bearer = 'Bearer',
@@ -15,6 +18,10 @@ export enum SignatureLevelEnum {
 export enum TokenEnum {
   access = 'access',
   refresh = 'refresh',
+}
+export enum LogoutEnum {
+  only = 'only',
+  all = 'all',
 }
 
 export const generateToken = async ({
@@ -86,15 +93,18 @@ export const getSignatures = async (
 export const createLoginCredentials = async (user: HUserDocument) => {
   const signatureLevel = await detectSignatureLevel(user.role);
   const signatures = await getSignatures(signatureLevel);
+
+  const jwtid = uuid();
+
   const access_token = await generateToken({
     payload: { _id: user._id, lvl: signatureLevel },
     secret: signatures.access_signature,
-    options: { expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES_IN) },
+    options: { expiresIn: Number(process.env.ACCESS_TOKEN_EXPIRES_IN), jwtid },
   });
   const refresh_token = await generateToken({
     payload: { _id: user._id, lvl: signatureLevel },
     secret: signatures.refresh_signature,
-    options: { expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRES_IN) },
+    options: { expiresIn: Number(process.env.REFRESH_TOKEN_EXPIRES_IN), jwtid },
   });
 
   return { access_token, refresh_token };
@@ -108,14 +118,15 @@ export const decodeToken = async ({
   tokenType?: TokenEnum;
 }) => {
   const userModel = new UserRepository(UserModel);
+  const tokenModel = new TokenRepository(TokenModel);
 
-  const [bearerKey, token] = authorization.split(' ');
-  if (!bearerKey || !token) {
+  const [scheme, token] = authorization.split(' ');
+  if (!scheme || !token) {
     throw new UnauthorizedException('Missing token parts');
   }
 
-  if (bearerKey !== 'Bearer') {
-    throw new UnauthorizedException('Invalid authorization bearerKey');
+  if (scheme !== 'Bearer') {
+    throw new UnauthorizedException('Invalid authorization scheme');
   }
 
   const decoded = decode(token) as JwtPayload;
@@ -134,8 +145,12 @@ export const decodeToken = async ({
 
   const verification = await verifyToken({ token, secret });
 
-  if (!verification || !verification._id) {
+  if (!verification || !verification._id || !verification.iat) {
     throw new UnauthorizedException('Invalid or expired token');
+  }
+
+  if (await tokenModel.findOne({ filter: { jti: verification.jti } })) {
+    throw new UnauthorizedException('invalid or old login credentials');
   }
 
   const user = await userModel.findOne({
@@ -144,6 +159,10 @@ export const decodeToken = async ({
 
   if (!user) {
     throw new BadRequestException('Not registered account');
+  }
+
+  if (user.changeCredentialsTime?.getTime() || 0 > verification.iat * 1000) {
+    throw new UnauthorizedException('invalid or old login credentials');
   }
 
   return {

@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '../utils/response/error.response';
 import { decodeToken, TokenEnum } from '../utils/security/token.security';
-import { RoleEnum } from '../DB/models/user.model';
+import { RoleEnum } from '../DB/models/User.model';
 
 export const authentication = (tokenType: TokenEnum = TokenEnum.access) => {
   return async (req: Request, res: Response, next: NextFunction) => {

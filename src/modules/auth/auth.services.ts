@@ -4,7 +4,7 @@ import type {
   ILoginBodyInputsDTO,
   ISignupBodyInputsDTO,
 } from './auth.dto';
-import { UserModel } from '../../DB/models/user.model';
+import { UserModel } from '../../DB/models/User.model';
 import { UserRepository } from '../../DB/repository/user.repository';
 import {
   BadRequestException,
