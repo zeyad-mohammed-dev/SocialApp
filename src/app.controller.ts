@@ -17,6 +17,7 @@ import { rateLimit } from 'express-rate-limit';
 import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import authRouter from './modules/auth/auth.controller';
+import userRouter from './modules/user/user.controller';
 import { globalErrorHandling } from './utils/response/error.response';
 import connectDB from './DB/connection.db';
 config({ path: resolve('./config/.env.development') });
@@ -59,12 +60,14 @@ const bootstrap = async (): Promise<void> => {
   // 🔐 App Routers
   // ===============================
   app.use('/auth', authRouter);
-
+  app.use('/user', userRouter);
   // ===============================
   // ❌ Invalid Route Handler (Fallback)
   // ===============================
   app.use('{/*dummy}', (req: Request, res: Response) => {
-    return res.status(404).json({ message: '❌ Not valid routing, please check the method and URL.' });
+    return res.status(404).json({
+      message: '❌ Not valid routing, please check the method and URL.',
+    });
   });
 
   // ===============================
