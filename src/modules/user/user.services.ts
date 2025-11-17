@@ -1,12 +1,17 @@
-import { UserModel } from '../../DB/models/User.model';
+import { HUserDocument, UserModel } from '../../DB/models/User.model';
 import { Request, Response } from 'express';
 import { ILogoutBodyInputsDTO } from './user.dto';
 import { IUser } from '../../DB/models/User.model';
 import { UpdateQuery } from 'mongoose';
-import { LogoutEnum } from '../../utils/security/token.security';
+import {
+  createLoginCredentials,
+  createRevokedToken,
+  LogoutEnum,
+} from '../../utils/security/token.security';
 import { UserRepository } from '../../DB/repository/user.repository';
 import { TokenRepository } from '../../DB/repository/token.repository';
 import { TokenModel } from '../../DB/models/Token.model';
+import { JwtPayload } from 'jsonwebtoken';
 
 class UserServices {
   private userModel = new UserRepository(UserModel);
@@ -34,17 +39,7 @@ class UserServices {
         break;
 
       default:
-        await this.tokenModel.create({
-          data: [
-            {
-              jti: req.tokenPayload?.jti as string,
-              expiresIn:
-                (req.tokenPayload?.iat as number) +
-                Number(process.env.REFRESH_TOKEN_EXPIRES_IN),
-              userId: req.tokenPayload?._id,
-            },
-          ],
-        });
+        await createRevokedToken(req.tokenPayload as JwtPayload);
         statusCode = 201;
         break;
     }
@@ -57,6 +52,11 @@ class UserServices {
     return res.status(statusCode).json({
       message: 'Done',
     });
+  };
+  refreshToken = async (req: Request, res: Response): Promise<Response> => {
+    const credentials = await createLoginCredentials(req.user as HUserDocument);
+    await createRevokedToken(req.tokenPayload as JwtPayload);
+    return res.status(201).json({ message: 'Done', data: { credentials } });
   };
 }
 

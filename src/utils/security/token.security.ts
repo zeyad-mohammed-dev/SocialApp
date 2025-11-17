@@ -8,7 +8,7 @@ import {
 } from '../response/error.response';
 import { UserRepository } from '../../DB/repository/user.repository';
 import { TokenRepository } from '../../DB/repository/token.repository';
-import { TokenModel } from '../../DB/models/Token.model';
+import { HTokenDocument, TokenModel } from '../../DB/models/Token.model';
 
 export enum SignatureLevelEnum {
   Bearer = 'Bearer',
@@ -161,7 +161,7 @@ export const decodeToken = async ({
     throw new BadRequestException('Not registered account');
   }
 
-  if (user.changeCredentialsTime?.getTime() || 0 > verification.iat * 1000) {
+  if ((user.changeCredentialsTime?.getTime() || 0) > verification.iat * 1000) {
     throw new UnauthorizedException('invalid or old login credentials');
   }
 
@@ -170,4 +170,29 @@ export const decodeToken = async ({
     tokenPayload: verification,
     level: lvl,
   };
+};
+
+export const createRevokedToken = async (
+  tokenPayload: JwtPayload
+): Promise<HTokenDocument> => {
+  const tokenModel = new TokenRepository(TokenModel);
+
+  const [result] =
+    (await tokenModel.create({
+      data: [
+        {
+          jti: tokenPayload.jti as string,
+          expiresIn:
+            (tokenPayload.iat as number) +
+            Number(process.env.REFRESH_TOKEN_EXPIRES_IN),
+          userId: tokenPayload._id,
+        },
+      ],
+    })) || [];
+
+  if (!result) {
+    throw new BadRequestException('Failed to revoke token');
+  }
+
+  return result;
 };

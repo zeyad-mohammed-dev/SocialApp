@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decodeToken = exports.createLoginCredentials = exports.getSignatures = exports.detectSignatureLevel = exports.verifyToken = exports.generateToken = exports.LogoutEnum = exports.TokenEnum = exports.SignatureLevelEnum = void 0;
+exports.createRevokedToken = exports.decodeToken = exports.createLoginCredentials = exports.getSignatures = exports.detectSignatureLevel = exports.verifyToken = exports.generateToken = exports.LogoutEnum = exports.TokenEnum = exports.SignatureLevelEnum = void 0;
 const uuid_1 = require("uuid");
 const jsonwebtoken_1 = require("jsonwebtoken");
 const User_model_1 = require("../../DB/models/User.model");
@@ -115,7 +115,7 @@ const decodeToken = async ({ authorization, tokenType = TokenEnum.access, }) => 
     if (!user) {
         throw new error_response_1.BadRequestException('Not registered account');
     }
-    if (user.changeCredentialsTime?.getTime() || 0 > verification.iat * 1000) {
+    if ((user.changeCredentialsTime?.getTime() || 0) > verification.iat * 1000) {
         throw new error_response_1.UnauthorizedException('invalid or old login credentials');
     }
     return {
@@ -125,3 +125,21 @@ const decodeToken = async ({ authorization, tokenType = TokenEnum.access, }) => 
     };
 };
 exports.decodeToken = decodeToken;
+const createRevokedToken = async (tokenPayload) => {
+    const tokenModel = new token_repository_1.TokenRepository(Token_model_1.TokenModel);
+    const [result] = (await tokenModel.create({
+        data: [
+            {
+                jti: tokenPayload.jti,
+                expiresIn: tokenPayload.iat +
+                    Number(process.env.REFRESH_TOKEN_EXPIRES_IN),
+                userId: tokenPayload._id,
+            },
+        ],
+    })) || [];
+    if (!result) {
+        throw new error_response_1.BadRequestException('Failed to revoke token');
+    }
+    return result;
+};
+exports.createRevokedToken = createRevokedToken;
