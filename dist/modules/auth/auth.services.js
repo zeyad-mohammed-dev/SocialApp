@@ -135,5 +135,83 @@ class AuthenticationService {
             data: { credentials },
         });
     };
+    sendForgetPasswordCode = async (req, res) => {
+        const { email } = req.body;
+        const user = await this.userModel.findOne({
+            filter: {
+                email,
+                provider: User_model_1.ProviderEnum.SYSTEM,
+                confirmedAt: { $exists: true },
+            },
+        });
+        if (!user) {
+            throw new error_response_1.NotFoundException('No account associated with this email');
+        }
+        const otp = (0, otp_1.generateNumberOtp)();
+        const result = await this.userModel.updateOne({
+            filter: { email },
+            update: { resetPasswordOTP: await (0, hash_security_1.generateHash)(String(otp)) },
+        });
+        if (!result.matchedCount) {
+            throw new error_response_1.BadRequestException('Failed to send reset code, please try again');
+        }
+        email_event_1.emailEvent.emit('resetPasswordOTP', {
+            to: email,
+            otp,
+            name: user.userName,
+        });
+        return res.json({
+            message: 'Done',
+        });
+    };
+    verifyForgetPasswordCode = async (req, res) => {
+        const { email, otp } = req.body;
+        const user = await this.userModel.findOne({
+            filter: {
+                email,
+                provider: User_model_1.ProviderEnum.SYSTEM,
+                resetPasswordOTP: { $exists: true },
+            },
+        });
+        if (!user) {
+            throw new error_response_1.NotFoundException('No account associated with this email');
+        }
+        if (!(await (0, hash_security_1.compareHash)(otp, user.resetPasswordOTP))) {
+            throw new error_response_1.ConflictException('Invalid OTP');
+        }
+        return res.json({
+            message: 'Done',
+        });
+    };
+    resetForgetPassword = async (req, res) => {
+        const { email, otp, password } = req.body;
+        const user = await this.userModel.findOne({
+            filter: {
+                email,
+                provider: User_model_1.ProviderEnum.SYSTEM,
+                resetPasswordOTP: { $exists: true },
+            },
+        });
+        if (!user) {
+            throw new error_response_1.NotFoundException('No account associated with this email');
+        }
+        if (!(await (0, hash_security_1.compareHash)(otp, user.resetPasswordOTP))) {
+            throw new error_response_1.ConflictException('Invalid OTP');
+        }
+        const result = await this.userModel.updateOne({
+            filter: { email },
+            update: {
+                password: await (0, hash_security_1.generateHash)(password),
+                $unset: { resetPasswordOTP: 1 },
+                changeCredentialsTime: new Date(),
+            },
+        });
+        if (!result.matchedCount) {
+            throw new error_response_1.BadRequestException('Failed to reset password, please try again');
+        }
+        return res.json({
+            message: 'Done',
+        });
+    };
 }
 exports.default = new AuthenticationService();

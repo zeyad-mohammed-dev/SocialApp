@@ -1,9 +1,12 @@
 import type { Request, Response } from 'express';
 import type {
   IConfirmEmailBodyInputsDTO,
+  IForgetCodeBodyInputsDTO,
   IGmailBodyInputsDTO,
   ILoginBodyInputsDTO,
+  IResetForgetPasswordBodyInputsDTO,
   ISignupBodyInputsDTO,
+  IVerifyForgetPasswordCodeBodyInputsDTO,
 } from './auth.dto';
 import { ProviderEnum, UserModel } from '../../DB/models/User.model';
 import { UserRepository } from '../../DB/repository/user.repository';
@@ -177,6 +180,113 @@ class AuthenticationService {
     return res.json({
       message: 'Done',
       data: { credentials },
+    });
+  };
+
+  sendForgetPasswordCode = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    const { email }: IForgetCodeBodyInputsDTO = req.body;
+
+    const user = await this.userModel.findOne({
+      filter: {
+        email,
+        provider: ProviderEnum.SYSTEM,
+        confirmedAt: { $exists: true },
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('No account associated with this email');
+    }
+
+    const otp = generateNumberOtp();
+
+    const result = await this.userModel.updateOne({
+      filter: { email },
+      update: { resetPasswordOTP: await generateHash(String(otp)) },
+    });
+
+    if (!result.matchedCount) {
+      throw new BadRequestException(
+        'Failed to send reset code, please try again'
+      );
+    }
+
+    emailEvent.emit('resetPasswordOTP', {
+      to: email,
+      otp,
+      name: user.userName,
+    });
+
+    return res.json({
+      message: 'Done',
+    });
+  };
+
+  verifyForgetPasswordCode = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    const { email, otp }: IVerifyForgetPasswordCodeBodyInputsDTO = req.body;
+    const user = await this.userModel.findOne({
+      filter: {
+        email,
+        provider: ProviderEnum.SYSTEM,
+        resetPasswordOTP: { $exists: true },
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('No account associated with this email');
+    }
+
+    if (!(await compareHash(otp, user.resetPasswordOTP as string))) {
+      throw new ConflictException('Invalid OTP');
+    }
+
+    return res.json({
+      message: 'Done',
+    });
+  };
+
+  resetForgetPassword = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    const { email, otp, password }: IResetForgetPasswordBodyInputsDTO =
+      req.body;
+    const user = await this.userModel.findOne({
+      filter: {
+        email,
+        provider: ProviderEnum.SYSTEM,
+        resetPasswordOTP: { $exists: true },
+      },
+    });
+    if (!user) {
+      throw new NotFoundException('No account associated with this email');
+    }
+
+    if (!(await compareHash(otp, user.resetPasswordOTP as string))) {
+      throw new ConflictException('Invalid OTP');
+    }
+
+    const result = await this.userModel.updateOne({
+      filter: { email },
+      update: {
+        password: await generateHash(password),
+        $unset: { resetPasswordOTP: 1 },
+        changeCredentialsTime: new Date(),
+      },
+    });
+
+    if (!result.matchedCount) {
+      throw new BadRequestException(
+        'Failed to reset password, please try again'
+      );
+    }
+
+    return res.json({
+      message: 'Done',
     });
   };
 }

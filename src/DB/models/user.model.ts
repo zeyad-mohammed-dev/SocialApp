@@ -27,7 +27,7 @@ export interface IUser {
   confirmedAt?: Date;
 
   password: string;
-  resetPassword?: string;
+  resetPasswordOTP?: string;
   changeCredentialsTime?: Date;
 
   phone?: string;
@@ -58,7 +58,7 @@ const userSchema = new Schema<IUser>(
         return this.provider === ProviderEnum.GOOGLE ? false : true;
       },
     },
-    resetPassword: { type: String },
+    resetPasswordOTP: { type: String },
     changeCredentialsTime: { type: Date },
 
     phone: { type: String },

@@ -11,5 +11,8 @@ router.post('/signup-gmail' , validation(validators.signupWithGmail),authService
 router.post('/login-gmail' , validation(validators.signupWithGmail),authServices.loginWithGmail)
 
 router.patch('/confirm-email', validation(validators.confirmEmail), authServices.confirmEmail);
+router.patch('/send-forget-password', validation(validators.sendForgetPasswordCode), authServices.sendForgetPasswordCode);
+router.patch('/verify-forget-password', validation(validators.verifyForgetPasswordCode), authServices.verifyForgetPasswordCode);
+router.patch('/reset-forget-password', validation(validators.resetForgetPassword), authServices.resetForgetPassword);
 
 export default router;

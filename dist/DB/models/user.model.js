@@ -29,7 +29,7 @@ const userSchema = new mongoose_1.Schema({
             return this.provider === ProviderEnum.GOOGLE ? false : true;
         },
     },
-    resetPassword: { type: String },
+    resetPasswordOTP: { type: String },
     changeCredentialsTime: { type: Date },
     phone: { type: String },
     address: { type: String },

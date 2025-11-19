@@ -46,4 +46,7 @@ router.post('/login', (0, validation_middleware_1.validation)(validators.login),
 router.post('/signup-gmail', (0, validation_middleware_1.validation)(validators.signupWithGmail), auth_services_1.default.signupWithGmail);
 router.post('/login-gmail', (0, validation_middleware_1.validation)(validators.signupWithGmail), auth_services_1.default.loginWithGmail);
 router.patch('/confirm-email', (0, validation_middleware_1.validation)(validators.confirmEmail), auth_services_1.default.confirmEmail);
+router.patch('/send-forget-password', (0, validation_middleware_1.validation)(validators.sendForgetPasswordCode), auth_services_1.default.sendForgetPasswordCode);
+router.patch('/verify-forget-password', (0, validation_middleware_1.validation)(validators.verifyForgetPasswordCode), auth_services_1.default.verifyForgetPasswordCode);
+router.patch('/reset-forget-password', (0, validation_middleware_1.validation)(validators.resetForgetPassword), auth_services_1.default.resetForgetPassword);
 exports.default = router;
