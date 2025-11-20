@@ -213,6 +213,7 @@ class AuthenticationService {
       );
     }
 
+    console.log(email);
     emailEvent.emit('resetPasswordOTP', {
       to: email,
       otp,

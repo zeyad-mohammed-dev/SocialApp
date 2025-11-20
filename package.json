@@ -4,6 +4,7 @@
   "description": "SocialApp",
   "main": "dist/index.js",
   "scripts": {
+    "start": "node --watch dist/index.js",
     "start:dev": "concurrently \"tsc --watch\" \"node --watch dist/index.js\""
   },
   "repository": {

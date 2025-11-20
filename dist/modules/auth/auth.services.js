@@ -155,6 +155,7 @@ class AuthenticationService {
         if (!result.matchedCount) {
             throw new error_response_1.BadRequestException('Failed to send reset code, please try again');
         }
+        console.log(email);
         email_event_1.emailEvent.emit('resetPasswordOTP', {
             to: email,
             otp,

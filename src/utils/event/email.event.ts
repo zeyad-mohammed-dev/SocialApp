@@ -24,7 +24,7 @@ emailEvent.on('confirmEmail', async (data: IEmail) => {
   }
 });
 
-emailEvent.on('resetPassword', async (data: IEmail) => {
+emailEvent.on('resetPasswordOTP', async (data: IEmail) => {
   try {
     data.subject = 'Reset-Account-Password';
     data.html = EmailTemplate({
