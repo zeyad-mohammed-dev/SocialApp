@@ -19,6 +19,14 @@ class UserServices {
             },
         });
     };
+    profileImage = async (req, res) => {
+        return res.json({
+            message: 'Done',
+            data: {
+                file: req.file,
+            },
+        });
+    };
     logout = async (req, res) => {
         const { flag } = req.body;
         let statusCode = 200;

@@ -36,14 +36,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const cloud_multer_1 = require("./../../utils/multer/cloud.multer");
 const express_1 = require("express");
 const user_services_1 = __importDefault(require("./user.services"));
 const authentication_middleware_1 = require("../../middlewares/authentication.middleware");
 const validation_middleware_1 = require("../../middlewares/validation.middleware");
 const validators = __importStar(require("./user.validation"));
 const token_security_1 = require("../../utils/security/token.security");
+const cloud_multer_2 = require("../../utils/multer/cloud.multer");
 const router = (0, express_1.Router)();
 router.get('/', (0, authentication_middleware_1.authentication)(), user_services_1.default.profile);
 router.post('/refresh-token', (0, authentication_middleware_1.authentication)(token_security_1.TokenEnum.refresh), user_services_1.default.refreshToken);
 router.post('/logout', (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.logout), user_services_1.default.logout);
+router.patch('/profile-image', (0, authentication_middleware_1.authentication)(), (0, cloud_multer_2.couldFileUpload)({
+    validation: cloud_multer_1.fileValidation.image,
+    storageApproach: cloud_multer_1.StorageEnum.disk,
+}).single('image'), user_services_1.default.profileImage);
 exports.default = router;

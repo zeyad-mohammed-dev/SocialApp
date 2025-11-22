@@ -28,6 +28,16 @@ class UserServices {
       },
     });
   };
+
+  profileImage = async (req: Request, res: Response): Promise<Response> => {
+    return res.json({
+      message: 'Done',
+      data: {
+        file: req.file,
+      },
+    });
+  };
+
   logout = async (req: Request, res: Response): Promise<Response> => {
     const { flag }: ILogoutBodyInputsDTO = req.body;
     let statusCode: number = 200;
