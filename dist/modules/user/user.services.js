@@ -21,7 +21,7 @@ class UserServices {
         });
     };
     profileImage = async (req, res) => {
-        const key = await (0, s3_config_1.uploadFile)({
+        const key = await (0, s3_config_1.uploadLargeFile)({
             file: req.file,
             path: `users/${req.tokenPayload?._id}`,
         });

@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadFile = exports.s3Config = void 0;
+exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
 const uuid_1 = require("uuid");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const cloud_multer_1 = require("./cloud.multer");
 const node_fs_1 = require("node:fs");
 const error_response_1 = require("../response/error.response");
+const lib_storage_1 = require("@aws-sdk/lib-storage");
 const s3Config = () => {
     return new client_s3_1.S3Client({
         region: process.env.AWS_REGION,
@@ -33,3 +34,26 @@ const uploadFile = async ({ storageApproach = cloud_multer_1.StorageEnum.memory,
     return command.input.Key;
 };
 exports.uploadFile = uploadFile;
+const uploadLargeFile = async ({ storageApproach = cloud_multer_1.StorageEnum.disk, Bucket = process.env.AWS_BUCKET_NAME, ACL = 'private', path = 'general', file, }) => {
+    const upload = new lib_storage_1.Upload({
+        client: (0, exports.s3Config)(),
+        params: {
+            Bucket,
+            ACL,
+            Key: `${process.env.APPLICATION_NAME}/${path}/${(0, uuid_1.v4)()}_${file.originalname}`,
+            Body: storageApproach === cloud_multer_1.StorageEnum.memory
+                ? file.buffer
+                : (0, node_fs_1.createReadStream)(file.path),
+            ContentType: file.mimetype,
+        },
+    });
+    upload.on('httpUploadProgress', (progress) => {
+        console.log('Upload Progress:', progress);
+    });
+    const { Key } = await upload.done();
+    if (!Key) {
+        throw new error_response_1.BadRequestException('File upload failed');
+    }
+    return Key;
+};
+exports.uploadLargeFile = uploadLargeFile;

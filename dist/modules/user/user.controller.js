@@ -50,6 +50,6 @@ router.post('/refresh-token', (0, authentication_middleware_1.authentication)(to
 router.post('/logout', (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.logout), user_services_1.default.logout);
 router.patch('/profile-image', (0, authentication_middleware_1.authentication)(), (0, cloud_multer_2.couldFileUpload)({
     validation: cloud_multer_1.fileValidation.image,
-    storageApproach: cloud_multer_1.StorageEnum.memory,
+    storageApproach: cloud_multer_1.StorageEnum.disk,
 }).single('image'), user_services_1.default.profileImage);
 exports.default = router;

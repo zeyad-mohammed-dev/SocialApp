@@ -7,6 +7,7 @@ import {
 import { StorageEnum } from './cloud.multer';
 import { createReadStream } from 'node:fs';
 import { BadRequestException } from '../response/error.response';
+import { Upload } from '@aws-sdk/lib-storage';
 
 export const s3Config = () => {
   return new S3Client({
@@ -51,4 +52,46 @@ export const uploadFile = async ({
   }
 
   return command.input.Key;
+};
+
+export const uploadLargeFile = async ({
+  storageApproach = StorageEnum.disk,
+  Bucket = process.env.AWS_BUCKET_NAME,
+  ACL = 'private',
+  path = 'general',
+  file,
+}: {
+  storageApproach?: StorageEnum;
+  Bucket?: string;
+  ACL?: ObjectCannedACL;
+  path?: string;
+  file: Express.Multer.File;
+}) => {
+  const upload = new Upload({
+    client: s3Config(),
+    params: {
+      Bucket,
+      ACL,
+      Key: `${process.env.APPLICATION_NAME}/${path}/${uuid()}_${
+        file.originalname
+      }`,
+      Body:
+        storageApproach === StorageEnum.memory
+          ? file.buffer
+          : createReadStream(file.path),
+      ContentType: file.mimetype,
+    },
+  });
+
+  upload.on('httpUploadProgress', (progress) => {
+    console.log('Upload Progress:', progress);
+  });
+
+  const { Key } = await upload.done();
+
+  if (!Key) {
+    throw new BadRequestException('File upload failed');
+  }
+
+  return Key;
 };
