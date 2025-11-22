@@ -28,7 +28,7 @@ router.patch(
   authentication(),
   couldFileUpload({
     validation: fileValidation.image,
-    storageApproach: StorageEnum.disk,
+    storageApproach: StorageEnum.memory,
   }).single('image'),
   userServices.profileImage
 );
