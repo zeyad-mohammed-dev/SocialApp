@@ -52,4 +52,8 @@ router.patch('/profile-image', (0, authentication_middleware_1.authentication)()
     validation: cloud_multer_1.fileValidation.image,
     storageApproach: cloud_multer_1.StorageEnum.disk,
 }).single('image'), user_services_1.default.profileImage);
+router.patch('/profile-cover-image', (0, authentication_middleware_1.authentication)(), (0, cloud_multer_2.couldFileUpload)({
+    validation: cloud_multer_1.fileValidation.image,
+    storageApproach: cloud_multer_1.StorageEnum.disk,
+}).array('images', 2), user_services_1.default.profileCoverImage);
 exports.default = router;

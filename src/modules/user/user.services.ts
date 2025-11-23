@@ -12,7 +12,12 @@ import { UserRepository } from '../../DB/repository/user.repository';
 import { TokenRepository } from '../../DB/repository/token.repository';
 import { TokenModel } from '../../DB/models/Token.model';
 import { JwtPayload } from 'jsonwebtoken';
-import { uploadFile, uploadLargeFile } from '../../utils/multer/s3.config';
+import {
+  uploadFile,
+  uploadFiles,
+  uploadLargeFile,
+} from '../../utils/multer/s3.config';
+import { StorageEnum } from '../../utils/multer/cloud.multer';
 
 class UserServices {
   private userModel = new UserRepository(UserModel);
@@ -32,13 +37,32 @@ class UserServices {
 
   profileImage = async (req: Request, res: Response): Promise<Response> => {
     const key = await uploadLargeFile({
+      storageApproach: StorageEnum.disk,
       file: req.file as Express.Multer.File,
       path: `users/${req.tokenPayload?._id}`,
     });
     return res.json({
       message: 'Done',
       data: {
-        key 
+        key,
+      },
+    });
+  };
+
+  profileCoverImage = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    const urls = await uploadFiles({
+      storageApproach: StorageEnum.disk,
+      files: req.files as Express.Multer.File[],
+      path: `users/${req.tokenPayload?._id}/cover`,
+      useLarge: true,
+    });
+    return res.json({
+      message: 'Done',
+      data: {
+        urls,
       },
     });
   };

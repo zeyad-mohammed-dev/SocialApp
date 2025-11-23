@@ -33,4 +33,14 @@ router.patch(
   userServices.profileImage
 );
 
+router.patch(
+  '/profile-cover-image',
+  authentication(),
+  couldFileUpload({
+    validation: fileValidation.image,
+    storageApproach: StorageEnum.disk,
+  }).array('images', 2),
+  userServices.profileCoverImage
+);
+
 export default router;

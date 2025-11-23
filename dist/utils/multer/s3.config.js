@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
+exports.uploadFiles = exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
 const uuid_1 = require("uuid");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const cloud_multer_1 = require("./cloud.multer");
@@ -57,3 +57,30 @@ const uploadLargeFile = async ({ storageApproach = cloud_multer_1.StorageEnum.di
     return Key;
 };
 exports.uploadLargeFile = uploadLargeFile;
+const uploadFiles = async ({ storageApproach = cloud_multer_1.StorageEnum.memory, Bucket = process.env.AWS_BUCKET_NAME, ACL = 'private', path = 'general', files, useLarge = false, }) => {
+    let urls = [];
+    if (useLarge) {
+        urls = await Promise.all(files.map((file) => {
+            return (0, exports.uploadLargeFile)({
+                storageApproach,
+                Bucket,
+                ACL,
+                path,
+                file,
+            });
+        }));
+    }
+    else {
+        urls = await Promise.all(files.map((file) => {
+            return (0, exports.uploadFile)({
+                storageApproach,
+                Bucket,
+                ACL,
+                path,
+                file,
+            });
+        }));
+    }
+    return urls;
+};
+exports.uploadFiles = uploadFiles;

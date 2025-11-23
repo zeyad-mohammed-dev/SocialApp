@@ -21,7 +21,7 @@ export const s3Config = () => {
 
 export const uploadFile = async ({
   storageApproach = StorageEnum.memory,
-  Bucket = process.env.AWS_BUCKET_NAME,
+  Bucket = process.env.AWS_BUCKET_NAME as string,
   ACL = 'private',
   path = 'general',
   file,
@@ -94,4 +94,50 @@ export const uploadLargeFile = async ({
   }
 
   return Key;
+};
+
+export const uploadFiles = async ({
+  storageApproach = StorageEnum.memory,
+  Bucket = process.env.AWS_BUCKET_NAME as string,
+  ACL = 'private',
+  path = 'general',
+  files,
+  useLarge = false,
+}: {
+  storageApproach?: StorageEnum;
+  Bucket?: string;
+  ACL?: ObjectCannedACL;
+  path?: string;
+  files: Express.Multer.File[];
+  useLarge?: boolean;
+}): Promise<string[]> => {
+  let urls: string[] = [];
+
+  if (useLarge) {
+    urls = await Promise.all(
+      files.map((file) => {
+        return uploadLargeFile({
+          storageApproach,
+          Bucket,
+          ACL,
+          path,
+          file,
+        });
+      })
+    );
+  } else {
+    urls = await Promise.all(
+      files.map((file) => {
+        return uploadFile({
+          storageApproach,
+          Bucket,
+          ACL,
+          path,
+          file,
+        });
+      })
+    );
+  }
+
+  return urls;
 };
