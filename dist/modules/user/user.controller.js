@@ -48,10 +48,7 @@ const router = (0, express_1.Router)();
 router.get('/', (0, authentication_middleware_1.authentication)(), user_services_1.default.profile);
 router.post('/refresh-token', (0, authentication_middleware_1.authentication)(token_security_1.TokenEnum.refresh), user_services_1.default.refreshToken);
 router.post('/logout', (0, authentication_middleware_1.authentication)(), (0, validation_middleware_1.validation)(validators.logout), user_services_1.default.logout);
-router.patch('/profile-image', (0, authentication_middleware_1.authentication)(), (0, cloud_multer_2.couldFileUpload)({
-    validation: cloud_multer_1.fileValidation.image,
-    storageApproach: cloud_multer_1.StorageEnum.disk,
-}).single('image'), user_services_1.default.profileImage);
+router.patch('/profile-image', (0, authentication_middleware_1.authentication)(), user_services_1.default.profileImage);
 router.patch('/profile-cover-image', (0, authentication_middleware_1.authentication)(), (0, cloud_multer_2.couldFileUpload)({
     validation: cloud_multer_1.fileValidation.image,
     storageApproach: cloud_multer_1.StorageEnum.disk,

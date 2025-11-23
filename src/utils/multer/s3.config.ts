@@ -8,6 +8,7 @@ import { StorageEnum } from './cloud.multer';
 import { createReadStream } from 'node:fs';
 import { BadRequestException } from '../response/error.response';
 import { Upload } from '@aws-sdk/lib-storage';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export const s3Config = () => {
   return new S3Client({
@@ -140,4 +141,32 @@ export const uploadFiles = async ({
   }
 
   return urls;
+};
+
+export const createPreSignedUploadLink = async ({
+  Bucket = process.env.AWS_BUCKET_NAME as string,
+  path = 'general',
+  expiresIn = 120,
+  ContentType,
+  originalname,
+}: {
+  Bucket?: string;
+  path?: string;
+  expiresIn?: number;
+  ContentType: string;
+  originalname: string;
+}): Promise<{ url: string; key: string }> => {
+  const command = new PutObjectCommand({
+    Bucket,
+    Key: `${process.env.APPLICATION_NAME}/${path}/${uuid()}_${originalname}`,
+    ContentType,
+  });
+
+  const url = await getSignedUrl(s3Config(), command, { expiresIn });
+
+  if (!url || !command?.input?.Key) {
+    throw new BadRequestException('Could not create pre-signed URL');
+  }
+
+  return { url, key: command.input.Key };
 };

@@ -22,14 +22,16 @@ class UserServices {
         });
     };
     profileImage = async (req, res) => {
-        const key = await (0, s3_config_1.uploadLargeFile)({
-            storageApproach: cloud_multer_1.StorageEnum.disk,
-            file: req.file,
+        const { ContentType, originalname, } = req.body;
+        const { url, key } = await (0, s3_config_1.createPreSignedUploadLink)({
+            ContentType,
+            originalname,
             path: `users/${req.tokenPayload?._id}`,
         });
         return res.json({
             message: 'Done',
             data: {
+                url,
                 key,
             },
         });

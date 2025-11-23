@@ -13,6 +13,7 @@ import { TokenRepository } from '../../DB/repository/token.repository';
 import { TokenModel } from '../../DB/models/Token.model';
 import { JwtPayload } from 'jsonwebtoken';
 import {
+  createPreSignedUploadLink,
   uploadFile,
   uploadFiles,
   uploadLargeFile,
@@ -36,14 +37,27 @@ class UserServices {
   };
 
   profileImage = async (req: Request, res: Response): Promise<Response> => {
-    const key = await uploadLargeFile({
-      storageApproach: StorageEnum.disk,
-      file: req.file as Express.Multer.File,
+    // const key = await uploadLargeFile({
+    //   storageApproach: StorageEnum.disk,
+    //   file: req.file as Express.Multer.File,
+    //   path: `users/${req.tokenPayload?._id}`,
+    // });
+
+    const {
+      ContentType,
+      originalname,
+    }: { ContentType: string; originalname: string } = req.body;
+
+    const { url, key } = await createPreSignedUploadLink({
+      ContentType,
+      originalname,
       path: `users/${req.tokenPayload?._id}`,
     });
+
     return res.json({
       message: 'Done',
       data: {
+        url,
         key,
       },
     });
