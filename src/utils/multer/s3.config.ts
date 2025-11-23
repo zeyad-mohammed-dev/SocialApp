@@ -1,5 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import {
+  GetObjectCommand,
+  GetObjectCommandOutput,
   ObjectCannedACL,
   PutObjectCommand,
   S3Client,
@@ -169,4 +171,19 @@ export const createPreSignedUploadLink = async ({
   }
 
   return { url, key: command.input.Key };
+};
+
+export const getFile = async ({
+  Bucket = process.env.AWS_BUCKET_NAME as string,
+  Key,
+}: {
+  Bucket?: string;
+  Key: string;
+}): Promise<GetObjectCommandOutput> => {
+  const command = new GetObjectCommand({
+    Bucket,
+    Key,
+  });
+
+  return await s3Config().send(command);
 };

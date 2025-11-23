@@ -18,9 +18,20 @@ import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import authRouter from './modules/auth/auth.controller';
 import userRouter from './modules/user/user.controller';
-import { globalErrorHandling } from './utils/response/error.response';
+import {
+  BadRequestException,
+  globalErrorHandling,
+} from './utils/response/error.response';
 import connectDB from './DB/connection.db';
+import { getFile } from './utils/multer/s3.config';
 config({ path: resolve('./config/.env.development') });
+
+// ===============================
+// 📦 AWS S3 – File Streaming Setup
+// ===============================
+import { promisify } from 'node:util';
+import { pipeline } from 'node:stream';
+const createS3WriteStreamPipe = promisify(pipeline);
 
 // ===============================
 // 🚦 Rate Limiter Setup
@@ -57,10 +68,48 @@ const bootstrap = async (): Promise<void> => {
   });
 
   // ===============================
-  // 🔐 App Routers
+  // 🔐 App Routes
   // ===============================
   app.use('/auth', authRouter);
   app.use('/user', userRouter);
+
+  app.get(
+    '/upload/*path',
+    async (req: Request, res: Response): Promise<void> => {
+      const { downloadName, download = 'false' } = req.query as {
+        downloadName?: string;
+        download?: string;
+      };
+
+      const { path } = req.params as unknown as { path: string[] };
+
+      const Key = path.join('/');
+
+      const s3Response = await getFile({ Key });
+
+      if (!s3Response.Body) {
+        throw new BadRequestException('fail to fetch this asset');
+      }
+
+      res.setHeader(
+        'Content-Type',
+        s3Response.ContentType || 'application/octet-stream'
+      );
+
+      if (download == 'true') {
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${downloadName || Key.split('/').pop()}"`
+        );
+      }
+
+      return await createS3WriteStreamPipe(
+        s3Response.Body as NodeJS.ReadableStream,
+        res
+      );
+    }
+  );
+
   // ===============================
   // ❌ Invalid Route Handler (Fallback)
   // ===============================

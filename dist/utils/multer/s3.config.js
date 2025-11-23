@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createPreSignedUploadLink = exports.uploadFiles = exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
+exports.getFile = exports.createPreSignedUploadLink = exports.uploadFiles = exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
 const uuid_1 = require("uuid");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const cloud_multer_1 = require("./cloud.multer");
@@ -98,3 +98,11 @@ const createPreSignedUploadLink = async ({ Bucket = process.env.AWS_BUCKET_NAME,
     return { url, key: command.input.Key };
 };
 exports.createPreSignedUploadLink = createPreSignedUploadLink;
+const getFile = async ({ Bucket = process.env.AWS_BUCKET_NAME, Key, }) => {
+    const command = new client_s3_1.GetObjectCommand({
+        Bucket,
+        Key,
+    });
+    return await (0, exports.s3Config)().send(command);
+};
+exports.getFile = getFile;
