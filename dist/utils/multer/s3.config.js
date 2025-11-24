@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFile = exports.createPreSignedUploadLink = exports.uploadFiles = exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
+exports.getFile = exports.createGetPreSignedLink = exports.createPreSignedUploadLink = exports.uploadFiles = exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
 const uuid_1 = require("uuid");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const cloud_multer_1 = require("./cloud.multer");
@@ -98,6 +98,21 @@ const createPreSignedUploadLink = async ({ Bucket = process.env.AWS_BUCKET_NAME,
     return { url, key: command.input.Key };
 };
 exports.createPreSignedUploadLink = createPreSignedUploadLink;
+const createGetPreSignedLink = async ({ Bucket = process.env.AWS_BUCKET_NAME, Key, expiresIn = 120, download = 'false', downloadName = 'dummy', }) => {
+    const command = new client_s3_1.GetObjectCommand({
+        Bucket,
+        Key,
+        ResponseContentDisposition: download === 'true'
+            ? `attachment; filename="${downloadName || Key.split('/').pop()}"`
+            : undefined,
+    });
+    const url = await (0, s3_request_presigner_1.getSignedUrl)((0, exports.s3Config)(), command, { expiresIn });
+    if (!url) {
+        throw new error_response_1.BadRequestException('Could not create pre-signed URL');
+    }
+    return url;
+};
+exports.createGetPreSignedLink = createGetPreSignedLink;
 const getFile = async ({ Bucket = process.env.AWS_BUCKET_NAME, Key, }) => {
     const command = new client_s3_1.GetObjectCommand({
         Bucket,

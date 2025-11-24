@@ -173,6 +173,37 @@ export const createPreSignedUploadLink = async ({
   return { url, key: command.input.Key };
 };
 
+export const createGetPreSignedLink = async ({
+  Bucket = process.env.AWS_BUCKET_NAME as string,
+  Key,
+  expiresIn = 120,
+  download = 'false',
+  downloadName = 'dummy',
+}: {
+  Bucket?: string;
+  Key: string;
+  expiresIn?: number;
+  download?: string;
+  downloadName?: string;
+}): Promise<string> => {
+  const command = new GetObjectCommand({
+    Bucket,
+    Key,
+    ResponseContentDisposition:
+      download === 'true'
+        ? `attachment; filename="${downloadName || Key.split('/').pop()}"`
+        : undefined,
+  });
+
+  const url = await getSignedUrl(s3Config(), command, { expiresIn });
+
+  if (!url) {
+    throw new BadRequestException('Could not create pre-signed URL');
+  }
+
+  return url;
+};
+
 export const getFile = async ({
   Bucket = process.env.AWS_BUCKET_NAME as string,
   Key,

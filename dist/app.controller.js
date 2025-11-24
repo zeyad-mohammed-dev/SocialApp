@@ -38,6 +38,17 @@ const bootstrap = async () => {
     });
     app.use('/auth', auth_controller_1.default);
     app.use('/user', user_controller_1.default);
+    app.get('/upload/pre-signed/*path', async (req, res) => {
+        const { downloadName, download = 'false' } = req.query;
+        const { path } = req.params;
+        const Key = path.join('/');
+        const url = await (0, s3_config_1.createGetPreSignedLink)({
+            Key,
+            downloadName: downloadName,
+            download,
+        });
+        return res.json({ message: 'Done', data: { url } });
+    });
     app.get('/upload/*path', async (req, res) => {
         const { downloadName, download = 'false' } = req.query;
         const { path } = req.params;

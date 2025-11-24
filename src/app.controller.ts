@@ -23,7 +23,7 @@ import {
   globalErrorHandling,
 } from './utils/response/error.response';
 import connectDB from './DB/connection.db';
-import { getFile } from './utils/multer/s3.config';
+import { createGetPreSignedLink, getFile } from './utils/multer/s3.config';
 config({ path: resolve('./config/.env.development') });
 
 // ===============================
@@ -72,6 +72,27 @@ const bootstrap = async (): Promise<void> => {
   // ===============================
   app.use('/auth', authRouter);
   app.use('/user', userRouter);
+
+  app.get(
+    '/upload/pre-signed/*path',
+    async (req: Request, res: Response): Promise<Response> => {
+      const { downloadName, download = 'false' } = req.query as {
+        downloadName?: string;
+        download?: string;
+      };
+      const { path } = req.params as unknown as { path: string[] };
+
+      const Key = path.join('/');
+
+      const url = await createGetPreSignedLink({
+        Key,
+        downloadName: downloadName as string,
+        download,
+      });
+
+      return res.json({ message: 'Done', data: { url } });
+    }
+  );
 
   app.get(
     '/upload/*path',
