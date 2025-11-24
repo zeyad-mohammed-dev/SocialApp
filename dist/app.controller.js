@@ -38,6 +38,15 @@ const bootstrap = async () => {
     });
     app.use('/auth', auth_controller_1.default);
     app.use('/user', user_controller_1.default);
+    app.get('/test', async (req, res) => {
+        const result = await (0, s3_config_1.deleteFiles)({
+            urls: [
+                'SOCIAL_APP/users/691f770d8be6ad8c0b4da3c0/0a986e95-104c-4152-9520-8cc038ed17ca_newProfileImage.jpg',
+                'SOCIAL_APP/users/691f770d8be6ad8c0b4da3c0/c57aa91f-9320-4163-b560-20ed9143fa94_newProfileImage.jpg',
+            ],
+        });
+        return res.json({ message: 'Done', data: { result } });
+    });
     app.get('/upload/pre-signed/*path', async (req, res) => {
         const { downloadName, download = 'false' } = req.query;
         const { path } = req.params;

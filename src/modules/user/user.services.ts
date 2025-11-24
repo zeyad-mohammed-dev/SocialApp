@@ -45,12 +45,12 @@ class UserServices {
 
     const {
       ContentType,
-      originalname,
-    }: { ContentType: string; originalname: string } = req.body;
+      OriginalName,
+    }: { ContentType: string; OriginalName: string } = req.body;
 
     const { url, key } = await createPreSignedUploadLink({
       ContentType,
-      originalname,
+      OriginalName,
       path: `users/${req.tokenPayload?._id}`,
     });
 

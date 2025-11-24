@@ -22,10 +22,10 @@ class UserServices {
         });
     };
     profileImage = async (req, res) => {
-        const { ContentType, originalname, } = req.body;
+        const { ContentType, OriginalName, } = req.body;
         const { url, key } = await (0, s3_config_1.createPreSignedUploadLink)({
             ContentType,
-            originalname,
+            OriginalName,
             path: `users/${req.tokenPayload?._id}`,
         });
         return res.json({

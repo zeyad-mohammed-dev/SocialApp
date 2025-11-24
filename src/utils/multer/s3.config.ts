@@ -1,5 +1,9 @@
 import { v4 as uuid } from 'uuid';
 import {
+  DeleteObjectCommand,
+  DeleteObjectCommandOutput,
+  DeleteObjectsCommand,
+  DeleteObjectsCommandOutput,
   GetObjectCommand,
   GetObjectCommandOutput,
   ObjectCannedACL,
@@ -150,17 +154,17 @@ export const createPreSignedUploadLink = async ({
   path = 'general',
   expiresIn = 120,
   ContentType,
-  originalname,
+  OriginalName,
 }: {
   Bucket?: string;
   path?: string;
   expiresIn?: number;
   ContentType: string;
-  originalname: string;
+  OriginalName: string;
 }): Promise<{ url: string; key: string }> => {
   const command = new PutObjectCommand({
     Bucket,
-    Key: `${process.env.APPLICATION_NAME}/${path}/${uuid()}_${originalname}`,
+    Key: `${process.env.APPLICATION_NAME}/${path}/${uuid()}_${OriginalName}`,
     ContentType,
   });
 
@@ -214,6 +218,45 @@ export const getFile = async ({
   const command = new GetObjectCommand({
     Bucket,
     Key,
+  });
+
+  return await s3Config().send(command);
+};
+
+export const deleteFile = async ({
+  Bucket = process.env.AWS_BUCKET_NAME as string,
+  Key,
+}: {
+  Bucket?: string;
+  Key: string;
+}): Promise<DeleteObjectCommandOutput> => {
+  const command = new DeleteObjectCommand({
+    Bucket,
+    Key,
+  });
+
+  return await s3Config().send(command);
+};
+
+export const deleteFiles = async ({
+  Bucket = process.env.AWS_BUCKET_NAME as string,
+  urls,
+  Quiet = false,
+}: {
+  Bucket?: string;
+  urls: string[];
+  Quiet?: boolean;
+}): Promise<DeleteObjectsCommandOutput> => {
+  const Objects = urls.map((url) => {
+    return { Key: url };
+  });
+
+  const command = new DeleteObjectsCommand({
+    Bucket,
+    Delete: {
+      Objects,
+      Quiet,
+    },
   });
 
   return await s3Config().send(command);

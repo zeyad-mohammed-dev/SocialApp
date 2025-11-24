@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFile = exports.createGetPreSignedLink = exports.createPreSignedUploadLink = exports.uploadFiles = exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
+exports.deleteFiles = exports.deleteFile = exports.getFile = exports.createGetPreSignedLink = exports.createPreSignedUploadLink = exports.uploadFiles = exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
 const uuid_1 = require("uuid");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const cloud_multer_1 = require("./cloud.multer");
@@ -85,10 +85,10 @@ const uploadFiles = async ({ storageApproach = cloud_multer_1.StorageEnum.memory
     return urls;
 };
 exports.uploadFiles = uploadFiles;
-const createPreSignedUploadLink = async ({ Bucket = process.env.AWS_BUCKET_NAME, path = 'general', expiresIn = 120, ContentType, originalname, }) => {
+const createPreSignedUploadLink = async ({ Bucket = process.env.AWS_BUCKET_NAME, path = 'general', expiresIn = 120, ContentType, OriginalName, }) => {
     const command = new client_s3_1.PutObjectCommand({
         Bucket,
-        Key: `${process.env.APPLICATION_NAME}/${path}/${(0, uuid_1.v4)()}_${originalname}`,
+        Key: `${process.env.APPLICATION_NAME}/${path}/${(0, uuid_1.v4)()}_${OriginalName}`,
         ContentType,
     });
     const url = await (0, s3_request_presigner_1.getSignedUrl)((0, exports.s3Config)(), command, { expiresIn });
@@ -121,3 +121,25 @@ const getFile = async ({ Bucket = process.env.AWS_BUCKET_NAME, Key, }) => {
     return await (0, exports.s3Config)().send(command);
 };
 exports.getFile = getFile;
+const deleteFile = async ({ Bucket = process.env.AWS_BUCKET_NAME, Key, }) => {
+    const command = new client_s3_1.DeleteObjectCommand({
+        Bucket,
+        Key,
+    });
+    return await (0, exports.s3Config)().send(command);
+};
+exports.deleteFile = deleteFile;
+const deleteFiles = async ({ Bucket = process.env.AWS_BUCKET_NAME, urls, Quiet = false, }) => {
+    const Objects = urls.map((url) => {
+        return { Key: url };
+    });
+    const command = new client_s3_1.DeleteObjectsCommand({
+        Bucket,
+        Delete: {
+            Objects,
+            Quiet,
+        },
+    });
+    return await (0, exports.s3Config)().send(command);
+};
+exports.deleteFiles = deleteFiles;
