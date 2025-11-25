@@ -27,7 +27,9 @@ import {
   createGetPreSignedLink,
   deleteFile,
   deleteFiles,
+  deleteFolderByPrefix,
   getFile,
+  listDirectoryFiles,
 } from './utils/multer/s3.config';
 config({ path: resolve('./config/.env.development') });
 
@@ -82,12 +84,15 @@ const bootstrap = async (): Promise<void> => {
     // const { Key } = req.query as { Key: string };
     // const result = await deleteFile({ Key });
 
-    const result = await deleteFiles({
-      urls: [
-        'SOCIAL_APP/users/691f770d8be6ad8c0b4da3c0/0a986e95-104c-4152-9520-8cc038ed17ca_newProfileImage.jpg',
-        'SOCIAL_APP/users/691f770d8be6ad8c0b4da3c0/c57aa91f-9320-4163-b560-20ed9143fa94_newProfileImage.jpg',
-      ],
-    });
+    // const result = await deleteFiles({
+    //   urls: [
+    //     'SOCIAL_APP/users/691f770d8be6ad8c0b4da3c0/0a986e95-104c-4152-9520-8cc038ed17ca_newProfileImage.jpg',
+    //     'SOCIAL_APP/users/691f770d8be6ad8c0b4da3c0/c57aa91f-9320-4163-b560-20ed9143fa94_newProfileImage.jpg',
+    //   ],
+    // });
+
+    const result = await deleteFolderByPrefix({ path: 'users/' });
+
     return res.json({ message: 'Done', data: { result } });
   });
 

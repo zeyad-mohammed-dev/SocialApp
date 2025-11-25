@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteFiles = exports.deleteFile = exports.getFile = exports.createGetPreSignedLink = exports.createPreSignedUploadLink = exports.uploadFiles = exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
+exports.deleteFolderByPrefix = exports.listDirectoryFiles = exports.deleteFiles = exports.deleteFile = exports.getFile = exports.createGetPreSignedLink = exports.createPreSignedUploadLink = exports.uploadFiles = exports.uploadLargeFile = exports.uploadFile = exports.s3Config = void 0;
 const uuid_1 = require("uuid");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const cloud_multer_1 = require("./cloud.multer");
@@ -143,3 +143,24 @@ const deleteFiles = async ({ Bucket = process.env.AWS_BUCKET_NAME, urls, Quiet =
     return await (0, exports.s3Config)().send(command);
 };
 exports.deleteFiles = deleteFiles;
+const listDirectoryFiles = async ({ Bucket = process.env.AWS_BUCKET_NAME, path, }) => {
+    const command = new client_s3_1.ListObjectsV2Command({
+        Bucket,
+        Prefix: `${process.env.APPLICATION_NAME}/${path}`,
+    });
+    return await (0, exports.s3Config)().send(command);
+};
+exports.listDirectoryFiles = listDirectoryFiles;
+const deleteFolderByPrefix = async ({ path, }) => {
+    const fileList = await (0, exports.listDirectoryFiles)({
+        path,
+    });
+    if (!fileList?.Contents?.length) {
+        throw new error_response_1.BadRequestException('No files found in this directory');
+    }
+    const urls = fileList.Contents.map((file) => {
+        return file.Key;
+    });
+    return await (0, exports.deleteFiles)({ urls });
+};
+exports.deleteFolderByPrefix = deleteFolderByPrefix;

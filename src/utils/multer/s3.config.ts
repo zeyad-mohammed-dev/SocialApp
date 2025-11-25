@@ -6,6 +6,7 @@ import {
   DeleteObjectsCommandOutput,
   GetObjectCommand,
   GetObjectCommandOutput,
+  ListObjectsV2Command,
   ObjectCannedACL,
   PutObjectCommand,
   S3Client,
@@ -260,4 +261,38 @@ export const deleteFiles = async ({
   });
 
   return await s3Config().send(command);
+};
+
+export const listDirectoryFiles = async ({
+  Bucket = process.env.AWS_BUCKET_NAME as string,
+  path,
+}: {
+  Bucket?: string;
+  path: string;
+}) => {
+  const command = new ListObjectsV2Command({
+    Bucket,
+    Prefix: `${process.env.APPLICATION_NAME}/${path}`,
+  });
+
+  return await s3Config().send(command);
+};
+
+export const deleteFolderByPrefix = async ({
+  path,
+}: {
+  path: string;
+}): Promise<DeleteObjectsCommandOutput> => {
+  const fileList = await listDirectoryFiles({
+    path,
+  });
+
+  if (!fileList?.Contents?.length) {
+    throw new BadRequestException('No files found in this directory');
+  }
+  const urls: string[] = fileList.Contents.map((file) => {
+    return file.Key as string;
+  });
+
+  return await deleteFiles({ urls });
 };
