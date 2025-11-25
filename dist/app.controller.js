@@ -38,10 +38,6 @@ const bootstrap = async () => {
     });
     app.use('/auth', auth_controller_1.default);
     app.use('/user', user_controller_1.default);
-    app.get('/test', async (req, res) => {
-        const result = await (0, s3_config_1.deleteFolderByPrefix)({ path: 'users/' });
-        return res.json({ message: 'Done', data: { result } });
-    });
     app.get('/upload/pre-signed/*path', async (req, res) => {
         const { downloadName, download = 'false' } = req.query;
         const { path } = req.params;

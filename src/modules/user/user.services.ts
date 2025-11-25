@@ -2,7 +2,7 @@ import { HUserDocument, UserModel } from '../../DB/models/User.model';
 import { Request, Response } from 'express';
 import { ILogoutBodyInputsDTO } from './user.dto';
 import { IUser } from '../../DB/models/User.model';
-import { UpdateQuery } from 'mongoose';
+import { Types, UpdateQuery } from 'mongoose';
 import {
   createLoginCredentials,
   createRevokedToken,
@@ -19,6 +19,8 @@ import {
   uploadLargeFile,
 } from '../../utils/multer/s3.config';
 import { StorageEnum } from '../../utils/multer/cloud.multer';
+import { BadRequestException } from '../../utils/response/error.response';
+import { s3Event } from '../../utils/event/s3.event';
 
 class UserServices {
   private userModel = new UserRepository(UserModel);
@@ -37,12 +39,6 @@ class UserServices {
   };
 
   profileImage = async (req: Request, res: Response): Promise<Response> => {
-    // const key = await uploadLargeFile({
-    //   storageApproach: StorageEnum.disk,
-    //   file: req.file as Express.Multer.File,
-    //   path: `users/${req.tokenPayload?._id}`,
-    // });
-
     const {
       ContentType,
       OriginalName,
@@ -52,6 +48,22 @@ class UserServices {
       ContentType,
       OriginalName,
       path: `users/${req.tokenPayload?._id}`,
+    });
+
+    const user = await this.userModel.findByIdAndUpdate({
+      id: req.user?._id as Types.ObjectId,
+      update: { profileImage: key, temProfileImage: req.user?.profileImage },
+    });
+
+    if (!user) {
+      throw new BadRequestException('fail to update user profile image');
+    }
+
+    s3Event.emit('trackProfileImage', {
+      userId: req.user?._id,
+      oldKey: req.user?.profileImage,
+      key,
+      expiresIn: 60000,
     });
 
     return res.json({

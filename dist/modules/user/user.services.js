@@ -7,6 +7,8 @@ const token_repository_1 = require("../../DB/repository/token.repository");
 const Token_model_1 = require("../../DB/models/Token.model");
 const s3_config_1 = require("../../utils/multer/s3.config");
 const cloud_multer_1 = require("../../utils/multer/cloud.multer");
+const error_response_1 = require("../../utils/response/error.response");
+const s3_event_1 = require("../../utils/event/s3.event");
 class UserServices {
     userModel = new user_repository_1.UserRepository(User_model_1.UserModel);
     tokenModel = new token_repository_1.TokenRepository(Token_model_1.TokenModel);
@@ -27,6 +29,19 @@ class UserServices {
             ContentType,
             OriginalName,
             path: `users/${req.tokenPayload?._id}`,
+        });
+        const user = await this.userModel.findByIdAndUpdate({
+            id: req.user?._id,
+            update: { profileImage: key, temProfileImage: req.user?.profileImage },
+        });
+        if (!user) {
+            throw new error_response_1.BadRequestException('fail to update user profile image');
+        }
+        s3_event_1.s3Event.emit('trackProfileImage', {
+            userId: req.user?._id,
+            oldKey: req.user?.profileImage,
+            key,
+            expiresIn: 60000,
         });
         return res.json({
             message: 'Done',

@@ -1,5 +1,6 @@
 import {
   MongooseUpdateQueryOptions,
+  Types,
   UpdateQuery,
   UpdateWriteOpResult,
 } from 'mongoose';
@@ -63,4 +64,20 @@ export abstract class DatabaseRepository<TDocument> {
       options
     );
   }
-}
+
+  async findByIdAndUpdate({
+    id,
+    update,
+    options = { new: true },
+  }: {
+    id: Types.ObjectId;
+    update: UpdateQuery<TDocument>;
+    options?: QueryOptions<TDocument> | null;
+  }): Promise<Lean<TDocument> | HydratedDocument<TDocument> | null> {
+    return this.model.findByIdAndUpdate(
+      id,
+      { ...update, $inc: { __v: 1 } },
+      options
+    );
+  }
+} 

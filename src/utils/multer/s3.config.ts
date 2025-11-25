@@ -153,7 +153,7 @@ export const uploadFiles = async ({
 export const createPreSignedUploadLink = async ({
   Bucket = process.env.AWS_BUCKET_NAME as string,
   path = 'general',
-  expiresIn = 120,
+  expiresIn = Number(process.env.AWS_PRE_SIGNED_URL_EXPIRES_IN_SECONDS),
   ContentType,
   OriginalName,
 }: {
@@ -181,7 +181,7 @@ export const createPreSignedUploadLink = async ({
 export const createGetPreSignedLink = async ({
   Bucket = process.env.AWS_BUCKET_NAME as string,
   Key,
-  expiresIn = 120,
+  expiresIn = Number(process.env.AWS_PRE_SIGNED_URL_EXPIRES_IN_SECONDS),
   download = 'false',
   downloadName = 'dummy',
 }: {

@@ -85,7 +85,7 @@ const uploadFiles = async ({ storageApproach = cloud_multer_1.StorageEnum.memory
     return urls;
 };
 exports.uploadFiles = uploadFiles;
-const createPreSignedUploadLink = async ({ Bucket = process.env.AWS_BUCKET_NAME, path = 'general', expiresIn = 120, ContentType, OriginalName, }) => {
+const createPreSignedUploadLink = async ({ Bucket = process.env.AWS_BUCKET_NAME, path = 'general', expiresIn = Number(process.env.AWS_PRE_SIGNED_URL_EXPIRES_IN_SECONDS), ContentType, OriginalName, }) => {
     const command = new client_s3_1.PutObjectCommand({
         Bucket,
         Key: `${process.env.APPLICATION_NAME}/${path}/${(0, uuid_1.v4)()}_${OriginalName}`,
@@ -98,7 +98,7 @@ const createPreSignedUploadLink = async ({ Bucket = process.env.AWS_BUCKET_NAME,
     return { url, key: command.input.Key };
 };
 exports.createPreSignedUploadLink = createPreSignedUploadLink;
-const createGetPreSignedLink = async ({ Bucket = process.env.AWS_BUCKET_NAME, Key, expiresIn = 120, download = 'false', downloadName = 'dummy', }) => {
+const createGetPreSignedLink = async ({ Bucket = process.env.AWS_BUCKET_NAME, Key, expiresIn = Number(process.env.AWS_PRE_SIGNED_URL_EXPIRES_IN_SECONDS), download = 'false', downloadName = 'dummy', }) => {
     const command = new client_s3_1.GetObjectCommand({
         Bucket,
         Key,
