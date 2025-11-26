@@ -58,7 +58,19 @@ class UserServices {
             path: `users/${req.tokenPayload?._id}/cover`,
             useLarge: true,
         });
-        return res.json({
+        const user = await this.userModel.findByIdAndUpdate({
+            id: req.user?._id,
+            update: {
+                coverImages: urls,
+            },
+        });
+        if (!user) {
+            throw new error_response_1.BadRequestException('fail to update user cover images');
+        }
+        if (req.user?.coverImages) {
+            await (0, s3_config_1.deleteFiles)({ urls: req.user.coverImages });
+        }
+        return res.status(200).json({
             message: 'Done',
             data: {
                 urls,

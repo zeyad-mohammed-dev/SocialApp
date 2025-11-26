@@ -14,6 +14,7 @@ import { TokenModel } from '../../DB/models/Token.model';
 import { JwtPayload } from 'jsonwebtoken';
 import {
   createPreSignedUploadLink,
+  deleteFiles,
   uploadFile,
   uploadFiles,
   uploadLargeFile,
@@ -85,7 +86,23 @@ class UserServices {
       path: `users/${req.tokenPayload?._id}/cover`,
       useLarge: true,
     });
-    return res.json({
+
+    const user = await this.userModel.findByIdAndUpdate({
+      id: req.user?._id as Types.ObjectId,
+      update: {
+        coverImages: urls,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('fail to update user cover images');
+    }
+
+    if (req.user?.coverImages) {
+      await deleteFiles({ urls: req.user.coverImages });
+    }
+
+    return res.status(200).json({
       message: 'Done',
       data: {
         urls,
