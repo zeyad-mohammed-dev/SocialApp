@@ -23,6 +23,51 @@ class UserServices {
             },
         });
     };
+    freezeAccount = async (req, res) => {
+        const { userId } = req.params || {};
+        if (userId && req.user?.role !== User_model_1.RoleEnum.admin) {
+            throw new error_response_1.ForbiddenException('not authorized user');
+        }
+        const user = await this.userModel.updateOne({
+            filter: { _id: userId || req.user?._id, freezedAt: { $exists: false } },
+            update: {
+                freezedAt: new Date(),
+                freezedBy: req.user?._id,
+                changeCredentialsTime: new Date(),
+                $unset: { restoredAt: 1, restoredBy: 1 },
+            },
+        });
+        if (!user.modifiedCount) {
+            throw new error_response_1.NotFoundException('user not found or already freezed');
+        }
+        return res.json({ message: 'Done' });
+    };
+    restoreAccount = async (req, res) => {
+        const { userId } = req.params;
+        const user = await this.userModel.updateOne({
+            filter: { _id: userId, freezedBy: { $ne: userId } },
+            update: {
+                restoredAt: new Date(),
+                restoredBy: req.user?._id,
+                $unset: { freezedAt: 1, freezedBy: 1 },
+            },
+        });
+        if (!user.modifiedCount) {
+            throw new error_response_1.NotFoundException('user not found or freezed by account owner');
+        }
+        return res.json({ message: 'Done' });
+    };
+    hardDeleteAccount = async (req, res) => {
+        const { userId } = req.params;
+        const user = await this.userModel.deleteOne({
+            filter: { _id: userId, freezedAt: { $exists: true } },
+        });
+        if (!user.deletedCount) {
+            throw new error_response_1.NotFoundException('user not found or not freezed');
+        }
+        await (0, s3_config_1.deleteFolderByPrefix)({ path: `users/${userId}` });
+        return res.json({ message: 'Done' });
+    };
     profileImage = async (req, res) => {
         const { ContentType, OriginalName, } = req.body;
         const { url, key } = await (0, s3_config_1.createPreSignedUploadLink)({

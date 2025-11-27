@@ -1,11 +1,15 @@
 import { fileValidation, StorageEnum } from './../../utils/multer/cloud.multer';
 import { Router } from 'express';
 import userServices from './user.services';
-import { authentication } from '../../middlewares/authentication.middleware';
+import {
+  authentication,
+  authorization,
+} from '../../middlewares/authentication.middleware';
 import { validation } from '../../middlewares/validation.middleware';
 import * as validators from './user.validation';
 import { TokenEnum } from '../../utils/security/token.security';
 import { couldFileUpload } from '../../utils/multer/cloud.multer';
+import { endpoint } from './user.authorization';
 
 const router = Router();
 
@@ -23,12 +27,7 @@ router.post(
   userServices.logout
 );
 
-router.patch(
-  '/profile-image',
-  authentication(),
-  userServices.profileImage
-);
-
+router.patch('/profile-image', authentication(), userServices.profileImage);
 router.patch(
   '/profile-cover-image',
   authentication(),
@@ -37,6 +36,27 @@ router.patch(
     storageApproach: StorageEnum.disk,
   }).array('images', 2),
   userServices.profileCoverImage
+);
+
+router.delete(
+  '/freeze-account{/:userId}',
+  authentication(),
+  validation(validators.freezeAccount),
+  userServices.freezeAccount
+);
+
+router.delete(
+  '/hard-delete-account/:userId',
+  authorization(endpoint.hardDeleteAccount),
+  validation(validators.hardDeleteAccount),
+  userServices.hardDeleteAccount
+);
+
+router.patch(
+  '/restore-account/:userId',
+  authorization(endpoint.hardDeleteAccount),
+  validation(validators.restoreAccount),
+  userServices.restoreAccount
 );
 
 export default router;

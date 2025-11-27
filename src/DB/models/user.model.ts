@@ -41,6 +41,11 @@ export interface IUser {
   role: RoleEnum;
   provider: ProviderEnum;
 
+  freezedAt?: Date;
+  freezedBy?: Types.ObjectId;
+  restoredAt?: Date;
+  restoredBy?: Types.ObjectId;
+
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -77,6 +82,11 @@ const userSchema = new Schema<IUser>(
       enum: ProviderEnum,
       default: ProviderEnum.SYSTEM,
     },
+
+    freezedAt: Date,
+    freezedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    restoredAt: Date,
+    restoredBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   {
     timestamps: true,

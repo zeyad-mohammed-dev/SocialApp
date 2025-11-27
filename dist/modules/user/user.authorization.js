@@ -4,4 +4,6 @@ exports.endpoint = void 0;
 const User_model_1 = require("../../DB/models/User.model");
 exports.endpoint = {
     profile: [User_model_1.RoleEnum.user],
+    restoreAccount: [User_model_1.RoleEnum.admin],
+    hardDeleteAccount: [User_model_1.RoleEnum.admin],
 };

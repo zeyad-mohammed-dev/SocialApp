@@ -1,6 +1,11 @@
-import { HUserDocument, UserModel } from '../../DB/models/User.model';
+import { HUserDocument, RoleEnum, UserModel } from '../../DB/models/User.model';
 import { Request, Response } from 'express';
-import { ILogoutBodyInputsDTO } from './user.dto';
+import {
+  IFreezeAccountParamsInputsDTO,
+  IHardDeleteAccountParamsInputsDTO,
+  ILogoutBodyInputsDTO,
+  IRestoreAccountParamsInputsDTO,
+} from './user.dto';
 import { IUser } from '../../DB/models/User.model';
 import { Types, UpdateQuery } from 'mongoose';
 import {
@@ -15,12 +20,17 @@ import { JwtPayload } from 'jsonwebtoken';
 import {
   createPreSignedUploadLink,
   deleteFiles,
+  deleteFolderByPrefix,
   uploadFile,
   uploadFiles,
   uploadLargeFile,
 } from '../../utils/multer/s3.config';
 import { StorageEnum } from '../../utils/multer/cloud.multer';
-import { BadRequestException } from '../../utils/response/error.response';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '../../utils/response/error.response';
 import { s3Event } from '../../utils/event/s3.event';
 
 class UserServices {
@@ -37,6 +47,67 @@ class UserServices {
         level: req.level,
       },
     });
+  };
+
+  freezeAccount = async (req: Request, res: Response): Promise<Response> => {
+    const { userId } = (req.params as IFreezeAccountParamsInputsDTO) || {};
+    if (userId && req.user?.role !== RoleEnum.admin) {
+      throw new ForbiddenException('not authorized user');
+    }
+
+    const user = await this.userModel.updateOne({
+      filter: { _id: userId || req.user?._id, freezedAt: { $exists: false } },
+      update: {
+        freezedAt: new Date(),
+        freezedBy: req.user?._id,
+        changeCredentialsTime: new Date(),
+        $unset: { restoredAt: 1, restoredBy: 1 },
+      },
+    });
+
+    if (!user.modifiedCount) {
+      throw new NotFoundException('user not found or already freezed');
+    }
+
+    return res.json({ message: 'Done' });
+  };
+
+  restoreAccount = async (req: Request, res: Response): Promise<Response> => {
+    const { userId } = req.params as IRestoreAccountParamsInputsDTO;
+
+    const user = await this.userModel.updateOne({
+      filter: { _id: userId, freezedBy: { $ne: userId } },
+      update: {
+        restoredAt: new Date(),
+        restoredBy: req.user?._id,
+        $unset: { freezedAt: 1, freezedBy: 1 },
+      },
+    });
+
+    if (!user.modifiedCount) {
+      throw new NotFoundException('user not found or freezed by account owner');
+    }
+
+    return res.json({ message: 'Done' });
+  };
+
+  hardDeleteAccount = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    const { userId } = req.params as IHardDeleteAccountParamsInputsDTO;
+
+    const user = await this.userModel.deleteOne({
+      filter: { _id: userId, freezedAt: { $exists: true } },
+    });
+
+    if (!user.deletedCount) {
+      throw new NotFoundException('user not found or not freezed');
+    }
+
+    await deleteFolderByPrefix({ path: `users/${userId}` });
+
+    return res.json({ message: 'Done' });
   };
 
   profileImage = async (req: Request, res: Response): Promise<Response> => {

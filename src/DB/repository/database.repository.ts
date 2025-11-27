@@ -1,3 +1,4 @@
+import { DeleteResult } from 'mongoose';
 import {
   MongooseUpdateQueryOptions,
   Types,
@@ -65,6 +66,14 @@ export abstract class DatabaseRepository<TDocument> {
     );
   }
 
+  async deleteOne({
+    filter,
+  }: {
+    filter: RootFilterQuery<TDocument>;
+  }): Promise<DeleteResult> {
+    return this.model.deleteOne(filter);
+  }
+
   async findByIdAndUpdate({
     id,
     update,
@@ -80,4 +89,4 @@ export abstract class DatabaseRepository<TDocument> {
       options
     );
   }
-} 
+}
