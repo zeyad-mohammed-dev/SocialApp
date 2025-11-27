@@ -9,19 +9,16 @@ const s3_config_1 = require("../../utils/multer/s3.config");
 const cloud_multer_1 = require("../../utils/multer/cloud.multer");
 const error_response_1 = require("../../utils/response/error.response");
 const s3_event_1 = require("../../utils/event/s3.event");
+const success_response_1 = require("../../utils/response/success.response");
 class UserServices {
     userModel = new user_repository_1.UserRepository(User_model_1.UserModel);
     tokenModel = new token_repository_1.TokenRepository(Token_model_1.TokenModel);
     constructor() { }
     profile = async (req, res) => {
-        return res.json({
-            message: 'Done',
-            data: {
-                user: req.user,
-                tokenPayload: req.tokenPayload,
-                level: req.level,
-            },
-        });
+        if (!req.user) {
+            throw new error_response_1.UnauthorizedException('user not authenticated');
+        }
+        return (0, success_response_1.successResponse)({ res, data: { user: req.user } });
     };
     freezeAccount = async (req, res) => {
         const { userId } = req.params || {};
@@ -40,7 +37,7 @@ class UserServices {
         if (!user.modifiedCount) {
             throw new error_response_1.NotFoundException('user not found or already freezed');
         }
-        return res.json({ message: 'Done' });
+        return (0, success_response_1.successResponse)({ res });
     };
     restoreAccount = async (req, res) => {
         const { userId } = req.params;
@@ -55,7 +52,7 @@ class UserServices {
         if (!user.modifiedCount) {
             throw new error_response_1.NotFoundException('user not found or freezed by account owner');
         }
-        return res.json({ message: 'Done' });
+        return (0, success_response_1.successResponse)({ res });
     };
     hardDeleteAccount = async (req, res) => {
         const { userId } = req.params;
@@ -66,7 +63,7 @@ class UserServices {
             throw new error_response_1.NotFoundException('user not found or not freezed');
         }
         await (0, s3_config_1.deleteFolderByPrefix)({ path: `users/${userId}` });
-        return res.json({ message: 'Done' });
+        return (0, success_response_1.successResponse)({ res });
     };
     profileImage = async (req, res) => {
         const { ContentType, OriginalName, } = req.body;
@@ -88,13 +85,7 @@ class UserServices {
             key,
             expiresIn: 60000,
         });
-        return res.json({
-            message: 'Done',
-            data: {
-                url,
-                key,
-            },
-        });
+        return (0, success_response_1.successResponse)({ res, data: { url } });
     };
     profileCoverImage = async (req, res) => {
         const urls = await (0, s3_config_1.uploadFiles)({
@@ -115,12 +106,7 @@ class UserServices {
         if (req.user?.coverImages) {
             await (0, s3_config_1.deleteFiles)({ urls: req.user.coverImages });
         }
-        return res.status(200).json({
-            message: 'Done',
-            data: {
-                urls,
-            },
-        });
+        return (0, success_response_1.successResponse)({ res, data: { user } });
     };
     logout = async (req, res) => {
         const { flag } = req.body;
@@ -139,14 +125,16 @@ class UserServices {
             filter: { _id: req.tokenPayload?._id },
             update,
         });
-        return res.status(statusCode).json({
-            message: 'Done',
-        });
+        return (0, success_response_1.successResponse)({ res, statusCode });
     };
     refreshToken = async (req, res) => {
         const credentials = await (0, token_security_1.createLoginCredentials)(req.user);
         await (0, token_security_1.createRevokedToken)(req.tokenPayload);
-        return res.status(201).json({ message: 'Done', data: { credentials } });
+        return (0, success_response_1.successResponse)({
+            res,
+            statusCode: 201,
+            data: { credentials },
+        });
     };
 }
 exports.default = new UserServices();

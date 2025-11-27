@@ -30,8 +30,16 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  UnauthorizedException,
 } from '../../utils/response/error.response';
 import { s3Event } from '../../utils/event/s3.event';
+import { successResponse } from '../../utils/response/success.response';
+import {
+  IProfileCoverImageResponse,
+  IProfileImageResponse,
+  IProfileResponse,
+  IRefreshTokenResponse,
+} from './user.entities';
 
 class UserServices {
   private userModel = new UserRepository(UserModel);
@@ -39,14 +47,10 @@ class UserServices {
   constructor() {}
 
   profile = async (req: Request, res: Response): Promise<Response> => {
-    return res.json({
-      message: 'Done',
-      data: {
-        user: req.user,
-        tokenPayload: req.tokenPayload,
-        level: req.level,
-      },
-    });
+    if (!req.user) {
+      throw new UnauthorizedException('user not authenticated');
+    }
+    return successResponse<IProfileResponse>({ res, data: { user: req.user } });
   };
 
   freezeAccount = async (req: Request, res: Response): Promise<Response> => {
@@ -69,7 +73,7 @@ class UserServices {
       throw new NotFoundException('user not found or already freezed');
     }
 
-    return res.json({ message: 'Done' });
+    return successResponse({ res });
   };
 
   restoreAccount = async (req: Request, res: Response): Promise<Response> => {
@@ -88,7 +92,7 @@ class UserServices {
       throw new NotFoundException('user not found or freezed by account owner');
     }
 
-    return res.json({ message: 'Done' });
+    return successResponse({ res });
   };
 
   hardDeleteAccount = async (
@@ -107,7 +111,7 @@ class UserServices {
 
     await deleteFolderByPrefix({ path: `users/${userId}` });
 
-    return res.json({ message: 'Done' });
+    return successResponse({ res });
   };
 
   profileImage = async (req: Request, res: Response): Promise<Response> => {
@@ -138,13 +142,7 @@ class UserServices {
       expiresIn: 60000,
     });
 
-    return res.json({
-      message: 'Done',
-      data: {
-        url,
-        key,
-      },
-    });
+    return successResponse<IProfileImageResponse>({ res, data: { url } });
   };
 
   profileCoverImage = async (
@@ -173,12 +171,7 @@ class UserServices {
       await deleteFiles({ urls: req.user.coverImages });
     }
 
-    return res.status(200).json({
-      message: 'Done',
-      data: {
-        urls,
-      },
-    });
+    return successResponse<IProfileCoverImageResponse>({ res, data: { user } });
   };
 
   logout = async (req: Request, res: Response): Promise<Response> => {
@@ -202,14 +195,17 @@ class UserServices {
       update,
     });
 
-    return res.status(statusCode).json({
-      message: 'Done',
-    });
+    return successResponse({ res, statusCode });
   };
+
   refreshToken = async (req: Request, res: Response): Promise<Response> => {
     const credentials = await createLoginCredentials(req.user as HUserDocument);
     await createRevokedToken(req.tokenPayload as JwtPayload);
-    return res.status(201).json({ message: 'Done', data: { credentials } });
+    return successResponse<IRefreshTokenResponse>({
+      res,
+      statusCode: 201,
+      data: { credentials },
+    });
   };
 }
 
