@@ -140,7 +140,7 @@ userSchema.post('save', async function (doc, next) {
     emailEvent.emit('confirmEmail', {
       to: this.email,
       otp: that.confirmEmailPlainOtp,
-      name: this.username,
+      name: this.firstName,
     });
   }
   next();

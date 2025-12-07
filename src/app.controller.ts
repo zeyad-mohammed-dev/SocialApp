@@ -76,7 +76,7 @@ const bootstrap = async (): Promise<void> => {
   // ===============================
   app.use('/auth', authRouter);
   app.use('/user', userRouter);
-  app.use('./post', postRouter);
+  app.use('/post', postRouter);
 
   // ===============================
   // 📦 AWS S3 Asset Delivery (Pre-Signed + Direct Streaming)

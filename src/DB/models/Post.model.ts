@@ -1,0 +1,79 @@
+import { model, models, HydratedDocument, Schema, Types } from 'mongoose';
+
+export enum AllowCommentsEnum {
+  allow = 'allow',
+  deny = 'deny',
+}
+
+export enum AvailabilityEnum {
+  public = 'public',
+  onlyMe = 'only-me',
+  friends = 'friends',
+}
+
+export interface IPost {
+  content?: string;
+  attachments?: string[];
+  assetsFolderId: string;
+
+  availability: AvailabilityEnum;
+  allowComments: AllowCommentsEnum;
+
+  likes?: Types.ObjectId[];
+  tags?: Types.ObjectId[];
+
+  createdBy: Types.ObjectId;
+
+  freezedAt?: Date;
+  freezedBy?: Types.ObjectId;
+
+  restoredAt?: Date;
+  restoredBy?: Types.ObjectId;
+
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export type HPostDocument = HydratedDocument<IPost>;
+
+const postSchema = new Schema<IPost>(
+  {
+    content: {
+      type: String,
+      minLength: 2,
+      maxLength: 500000,
+      required: function (): boolean {
+        return !this.attachments?.length;
+      },
+    },
+    attachments: [String],
+    assetsFolderId: { type: String, required: true },
+
+    availability: {
+      type: String,
+      enum: AvailabilityEnum,
+      default: AvailabilityEnum.public,
+    },
+    allowComments: {
+      type: String,
+      enum: AllowCommentsEnum,
+      default: AllowCommentsEnum.allow,
+    },
+
+    likes: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    tags: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+
+    freezedAt: Date,
+    freezedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+
+    restoredAt: Date,
+    restoredBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+export const PostModel = models.Post || model<IPost>('Post', postSchema);
