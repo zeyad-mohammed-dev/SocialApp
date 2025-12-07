@@ -16,21 +16,18 @@ import { rateLimit } from 'express-rate-limit';
 // ===============================
 import { config } from 'dotenv';
 import { resolve } from 'node:path';
-import authRouter from './modules/auth/auth.controller';
-import userRouter from './modules/user/user.controller';
+
+import { authRouter, postRouter, userRouter } from './modules';
+// import { router as authRouter } from './modules/auth';
+
+// // import authRouter from './modules/auth/auth.controller';
+// import userRouter from './modules/user/user.controller';
 import {
   BadRequestException,
   globalErrorHandling,
 } from './utils/response/error.response';
 import connectDB from './DB/connection.db';
-import {
-  createGetPreSignedLink,
-  deleteFile,
-  deleteFiles,
-  deleteFolderByPrefix,
-  getFile,
-  listDirectoryFiles,
-} from './utils/multer/s3.config';
+import { createGetPreSignedLink, getFile } from './utils/multer/s3.config';
 config({ path: resolve('./config/.env.development') });
 
 // ===============================
@@ -75,10 +72,11 @@ const bootstrap = async (): Promise<void> => {
   });
 
   // ===============================
-  // 🔐 App Routes
+  // 🔐 App Router
   // ===============================
   app.use('/auth', authRouter);
   app.use('/user', userRouter);
+  app.use('./post', postRouter);
 
   // ===============================
   // 📦 AWS S3 Asset Delivery (Pre-Signed + Direct Streaming)
@@ -158,6 +156,37 @@ const bootstrap = async (): Promise<void> => {
 
   // 📂 DataBase
   await connectDB();
+
+  // ===============================
+  // 💬 Tests
+  // ===============================
+
+  // async function test() {
+  //   try {
+  //     // const user = new UserModel({
+  //     //   username: 'zeyad Mohammed',
+  //     //   email: `${Date.now()}@gmail.com`,
+  //     //   password: 'AVSjsut382',
+  //     // });
+  //     // await user.save({ validateBeforeSave: true });
+
+  //     // const userModel = new UserRepository(UserModel);
+  //     // const user = (await userModel.findOne({
+  //     //   filter: { gender: GenderEnum.female },
+  //     // })) as HUserDocument;
+  //     // console.log({ result: user });
+
+  //     const userModel = new UserRepository(UserModel);
+  //     const users = await userModel.find({
+  //       filter: { paranoid: false },
+  //       options: { limit: 2, skip: 0 },
+  //     });
+  //     console.log(users);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
+  // test();
 
   // ===============================
   // 📡 Start Server

@@ -1,6 +1,6 @@
 import { fileValidation, StorageEnum } from './../../utils/multer/cloud.multer';
 import { Router } from 'express';
-import userServices from './user.services';
+import userServices from './user.service';
 import {
   authentication,
   authorization,

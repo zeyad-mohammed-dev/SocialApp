@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { deleteFile, getFile } from '../multer/s3.config';
 import { UserModel } from '../../DB/models/User.model';
-import { UserRepository } from '../../DB/repository/user.repository';
+import { UserRepository } from '../../DB/repository';
 
 export const s3Event = new EventEmitter();
 

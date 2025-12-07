@@ -13,8 +13,7 @@ import {
   createRevokedToken,
   LogoutEnum,
 } from '../../utils/security/token.security';
-import { UserRepository } from '../../DB/repository/user.repository';
-import { TokenRepository } from '../../DB/repository/token.repository';
+import { UserRepository, TokenRepository } from '../../DB/repository';
 import { TokenModel } from '../../DB/models/Token.model';
 import { JwtPayload } from 'jsonwebtoken';
 import {

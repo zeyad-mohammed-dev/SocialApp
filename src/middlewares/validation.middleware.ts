@@ -46,9 +46,14 @@ export const validation = (schema: SchemaType) => {
 };
 
 export const generalFields = {
-  userName: z.string({ error: 'userName is required ' }).min(2, { error: 'min userName length is 2 char' }).max(20, { error: 'max userName length is 20 char' }),
+  username: z
+    .string({ error: 'username is required ' })
+    .min(2, { error: 'min username length is 2 char' })
+    .max(20, { error: 'max username length is 20 char' }),
   email: z.email({ error: 'valid email must be like to example@domain.com' }),
-  password: z.string().regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/),
+  password: z
+    .string()
+    .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/),
   confirmPassword: z.string(),
-  otp:z.string().regex(/^[0-9]{6}$/, "Invalid OTP format")
+  otp: z.string().regex(/^[0-9]{6}$/, 'Invalid OTP format'),
 };

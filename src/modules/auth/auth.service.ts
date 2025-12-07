@@ -8,8 +8,9 @@ import type {
   ISignupBodyInputsDTO,
   IVerifyForgetPasswordCodeBodyInputsDTO,
 } from './auth.dto';
+
 import { ProviderEnum, UserModel } from '../../DB/models/User.model';
-import { UserRepository } from '../../DB/repository/user.repository';
+import { UserRepository } from '../../DB/repository';
 import {
   BadRequestException,
   ConflictException,
@@ -112,7 +113,7 @@ class AuthenticationService {
   };
 
   signup = async (req: Request, res: Response): Promise<Response> => {
-    let { userName, email, password }: ISignupBodyInputsDTO = req.body;
+    let { username, email, password }: ISignupBodyInputsDTO = req.body;
 
     const checkUserExist = await this.userModel.findOne({
       filter: { email },
@@ -129,15 +130,13 @@ class AuthenticationService {
     await this.userModel.createUser({
       data: [
         {
-          userName,
+          username,
           email,
-          password: await generateHash(password),
-          confirmEmailOtp: await generateHash(otp),
+          password,
+          confirmEmailOtp: otp,
         },
       ],
     });
-
-    emailEvent.emit('confirmEmail', { to: email, otp, name: userName });
 
     return successResponse({ res, statusCode: 201 });
   };
@@ -227,7 +226,7 @@ class AuthenticationService {
     emailEvent.emit('resetPasswordOTP', {
       to: email,
       otp,
-      name: user.userName,
+      name: user.username,
     });
 
     return successResponse({ res });

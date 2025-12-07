@@ -1,6 +1,6 @@
 import * as validators from './auth.validation';
 import { validation } from '../../middlewares/validation.middleware';
-import authServices from './auth.services';
+import authServices from './auth.service';
 import { Router } from 'express';
 const router = Router();
 
