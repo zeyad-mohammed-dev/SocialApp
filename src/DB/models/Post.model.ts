@@ -11,6 +11,11 @@ export enum AvailabilityEnum {
   friends = 'friends',
 }
 
+export enum LikeActionEnum {
+  like = 'like',
+  unlike = 'unlike',
+}
+
 export interface IPost {
   content?: string;
   attachments?: string[];
@@ -73,7 +78,19 @@ const postSchema = new Schema<IPost>(
   },
   {
     timestamps: true,
+    strictQuery: true,
   }
 );
+
+postSchema.pre(['findOneAndUpdate', 'updateOne'], function (next) {
+  const query = this.getQuery();
+  if (query.paranoid === false) {
+    this.setQuery({ ...query });
+  } else {
+    this.setQuery({ ...query, freezedAt: { $exists: false } });
+  }
+
+  next();
+});
 
 export const PostModel = models.Post || model<IPost>('Post', postSchema);

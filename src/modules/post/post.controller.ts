@@ -12,11 +12,18 @@ import { Router } from 'express';
 const router = Router();
 
 router.post(
-  '/create-post',
+  '/',
   authentication(),
   couldFileUpload({ validation: fileValidation.image }).array('attachments', 2),
   validation(validators.createPost),
   postService.createPost
+);
+
+router.post(
+  '/:postId/like',
+  authentication(),
+  validation(validators.likePost),
+  postService.likePost
 );
 
 export default router;

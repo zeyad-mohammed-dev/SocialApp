@@ -150,4 +150,20 @@ export abstract class DatabaseRepository<TDocument> {
       options
     );
   }
+
+  async findOneAndUpdate({
+    filter,
+    update,
+    options = { new: true },
+  }: {
+    filter?: RootFilterQuery<TDocument>;
+    update: UpdateQuery<TDocument>;
+    options?: QueryOptions<TDocument> | null;
+  }): Promise<Lean<TDocument> | HydratedDocument<TDocument> | null> {
+    return this.model.findOneAndUpdate(
+      filter,
+      { ...update, $inc: { __v: 1 } },
+      options
+    );
+  }
 }

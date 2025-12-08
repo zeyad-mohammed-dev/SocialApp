@@ -2,10 +2,11 @@ import z from 'zod';
 import {
   AllowCommentsEnum,
   AvailabilityEnum,
+  LikeActionEnum,
 } from '../../DB/models/Post.model';
-import { generalFields } from '../../middlewares/validation.middleware';
 import { fileValidation } from '../../utils/multer/cloud.multer';
 import { Types } from 'mongoose';
+import { generalFields } from '../../middlewares/validation.middleware';
 
 export const createPost = {
   body: z
@@ -39,4 +40,13 @@ export const createPost = {
         });
       }
     }),
+};
+
+export const likePost = {
+  params: z.strictObject({
+    postId: generalFields.id,
+  }),
+  query: z.strictObject({
+    action: z.enum(LikeActionEnum).default(LikeActionEnum.like),
+  }),
 };

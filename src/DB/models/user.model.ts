@@ -145,6 +145,18 @@ userSchema.post('save', async function (doc, next) {
   }
   next();
 });
+
+//find hooks
+userSchema.pre(['find', 'findOne'], function (next) {
+  const query = this.getQuery();
+  if (query.paranoid === false) {
+    this.setQuery({ ...query });
+  } else {
+    this.setQuery({ ...query, freezedAt: { $exists: false } });
+  }
+
+  next()
+});
 // userSchema.pre(['find', 'findOne'], function (next) {
 //   const query = this.getQuery();
 //   console.log({
