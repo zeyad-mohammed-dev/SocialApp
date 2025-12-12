@@ -92,15 +92,6 @@ class PostService {
       throw new NotFoundException('Post not found');
     }
 
-    if (req.body.removedAttachments?.length && post.attachments?.length) {
-      post.attachments = post.attachments.filter((attachment: string) => {
-        if (!req.body.removedAttachments.includes(attachment)) {
-          return attachment;
-        }
-        return;
-      });
-    }
-
     if (
       req.body.tags?.length &&
       (await this.userModel.find({ filter: { _id: { $in: req.body.tags } } }))
@@ -115,7 +106,6 @@ class PostService {
         files: req.files as Express.Multer.File[],
         path: `users/${post.createdBy}/post/${post.assetsFolderId}`,
       });
-      post.attachments = [...(post.attachments || []), ...attachments];
     }
 
     const updatedPost = await this.postModel.updateOne({
@@ -125,16 +115,20 @@ class PostService {
         allowComments: req.body.allowComments || post.allowComments,
         availability: req.body.availability || post.availability,
 
-        attachments: post.attachments,
-        // $addToSet: {
-        //   attachments: { $each: attachments || [] },
-        //   tags: { $each: req.body.tags || [] },
-        // },
+        $addToSet: {
+          attachments: { $each: attachments || [] },
+          tags: { $each: req.body.tags || [] },
+        },
+      },
+    });
 
-        // $pull: {
-        //   attachments: { $in: req.body.removedAttachments || [] },
-        //   tags: { $in: req.body.removedTags || [] },
-        // },
+    const updatedPost2 = await this.postModel.updateOne({
+      filter: { _id: post._id },
+      update: {
+        $pull: {
+          attachments: { $in: req.body.removedAttachments || [] },
+          tags: { $in: req.body.removedTags || [] },
+        },
       },
     });
 
