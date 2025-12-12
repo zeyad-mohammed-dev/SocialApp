@@ -199,15 +199,12 @@ class PostService {
       page: number;
       size: number;
     };
-    page = Math.floor(page < 1 ? 1 : page);
-    size = Math.floor(size < 1 ? 5 : size);
-
-    const skip = (page - 1) * size;
-    const posts = await this.postModel.find({
+    const posts = await this.postModel.paginate({
       filter: {
         $or: postAvailability(req),
       },
-      options: { skip, limit: size },
+      page,
+      size,
     });
 
     return successResponse({ res, data: { posts } });

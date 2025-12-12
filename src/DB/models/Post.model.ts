@@ -82,7 +82,7 @@ const postSchema = new Schema<IPost>(
   }
 );
 
-postSchema.pre(['findOneAndUpdate', 'updateOne'], function (next) {
+postSchema.pre(['findOne', 'find', 'countDocuments'], function (next) {
   const query = this.getQuery();
   if (query.paranoid === false) {
     this.setQuery({ ...query });
@@ -93,4 +93,14 @@ postSchema.pre(['findOneAndUpdate', 'updateOne'], function (next) {
   next();
 });
 
+postSchema.pre(['findOneAndUpdate', 'updateOne'], function (next) {
+  const query = this.getQuery();
+  if (query.paranoid === false) {
+    this.setQuery({ ...query });
+  } else {
+    this.setQuery({ ...query, freezedAt: { $exists: false } });
+  }
+
+  next();
+});
 export const PostModel = models.Post || model<IPost>('Post', postSchema);
