@@ -104,8 +104,17 @@ export abstract class DatabaseRepository<TDocument> {
     update: UpdateQuery<TDocument>;
     options?: MongooseUpdateQueryOptions<TDocument> | null;
   }): Promise<UpdateWriteOpResult> {
-    return this.model.updateOne(
-      filter,
+    if (Array.isArray(update)) {
+      update.push({
+        $set: {
+          __v: { $add: ['$__v', 1] },
+        },
+      });
+      return await this.model.updateOne(filter || {}, update, options);
+    }
+    console.log({ ...update, $inc: { __v: 1 } });
+    return await this.model.updateOne(
+      filter || {},
       { ...update, $inc: { __v: 1 } },
       options
     );

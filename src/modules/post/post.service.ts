@@ -40,10 +40,15 @@ class PostService {
   createPost = async (req: Request, res: Response): Promise<Response> => {
     if (
       req.body.tags?.length &&
-      (await this.userModel.find({ filter: { _id: { $in: req.body.tags } } }))
-        .length !== req.body.tags.length
+      (
+        await this.userModel.find({
+          filter: { _id: { $in: req.body.tags, $ne: req.user?._id } },
+        })
+      ).length !== req.body.tags.length
     ) {
-      throw new NotFoundException('One or more tagged users not found');
+      throw new NotFoundException(
+        'One or more tagged users not found or you try to tag your self'
+      );
     }
 
     let attachments: string[] = [];
@@ -94,8 +99,11 @@ class PostService {
 
     if (
       req.body.tags?.length &&
-      (await this.userModel.find({ filter: { _id: { $in: req.body.tags } } }))
-        .length !== req.body.tags.length
+      (
+        await this.userModel.find({
+          filter: { _id: { $in: req.body.tags, $ne: req.user?._id } },
+        })
+      ).length !== req.body.tags.length
     ) {
       throw new NotFoundException('One or more tagged users not found');
     }
@@ -110,26 +118,41 @@ class PostService {
 
     const updatedPost = await this.postModel.updateOne({
       filter: { _id: post._id },
-      update: {
-        content: req.body.content,
-        allowComments: req.body.allowComments || post.allowComments,
-        availability: req.body.availability || post.availability,
-
-        $addToSet: {
-          attachments: { $each: attachments || [] },
-          tags: { $each: req.body.tags || [] },
+      update: [
+        {
+          $set: {
+            content: req.body.content,
+            allowComments: req.body.allowComments || post.allowComments,
+            availability: req.body.availability || post.availability,
+            attachments: {
+              $setUnion: [
+                {
+                  $setDifference: [
+                    '$attachments',
+                    req.body.removedAttachments || [],
+                  ],
+                },
+                attachments,
+              ],
+            },
+            tags: {
+              $setUnion: [
+                {
+                  $setDifference: [
+                    '$tags',
+                    (req.body.removedTags || []).map((tag: string) => {
+                      return Types.ObjectId.createFromHexString(tag);
+                    }),
+                  ],
+                },
+                (req.body.tags || []).map((tag: string) => {
+                  return Types.ObjectId.createFromHexString(tag);
+                }),
+              ],
+            },
+          },
         },
-      },
-    });
-
-    const updatedPost2 = await this.postModel.updateOne({
-      filter: { _id: post._id },
-      update: {
-        $pull: {
-          attachments: { $in: req.body.removedAttachments || [] },
-          tags: { $in: req.body.removedTags || [] },
-        },
-      },
+      ],
     });
 
     if (!updatedPost) {
@@ -169,6 +192,25 @@ class PostService {
     }
 
     return successResponse({ res });
+  };
+
+  postList = async (req: Request, res: Response): Promise<Response> => {
+    let { page, size } = req.query as unknown as {
+      page: number;
+      size: number;
+    };
+    page = Math.floor(page < 1 ? 1 : page);
+    size = Math.floor(size < 1 ? 5 : size);
+
+    const skip = (page - 1) * size;
+    const posts = await this.postModel.find({
+      filter: {
+        $or: postAvailability(req),
+      },
+      options: { skip, limit: size },
+    });
+
+    return successResponse({ res, data: { posts } });
   };
 }
 

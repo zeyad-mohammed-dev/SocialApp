@@ -11,6 +11,12 @@ import { Router } from 'express';
 
 const router = Router();
 
+router.get(
+  '/',
+  authentication(),
+  postService.postList
+);
+
 router.post(
   '/',
   authentication(),
