@@ -1,4 +1,4 @@
-import postService from './post.service';
+import {postService} from './post.service';
 import { validation } from '../../middlewares/validation.middleware';
 import * as validators from './post.validation';
 import { authentication } from '../../middlewares/authentication.middleware';
@@ -19,7 +19,7 @@ router.post(
   postService.createPost
 );
 
-router.post(
+router.patch(
   '/:postId/like',
   authentication(),
   validation(validators.likePost),

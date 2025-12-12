@@ -49,6 +49,7 @@ export interface IUser {
   freezedBy?: Types.ObjectId;
   restoredAt?: Date;
   restoredBy?: Types.ObjectId;
+  friends?: Types.ObjectId[];
 
   createdAt: Date;
   updatedAt?: Date;
@@ -94,6 +95,7 @@ const userSchema = new Schema<IUser>(
     freezedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     restoredAt: Date,
     restoredBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    friends: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
   {
     timestamps: true,
@@ -155,7 +157,7 @@ userSchema.pre(['find', 'findOne'], function (next) {
     this.setQuery({ ...query, freezedAt: { $exists: false } });
   }
 
-  next()
+  next();
 });
 // userSchema.pre(['find', 'findOne'], function (next) {
 //   const query = this.getQuery();
