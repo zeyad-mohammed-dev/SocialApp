@@ -15,7 +15,7 @@ import {
 import { deleteFiles, uploadFiles } from '../../utils/multer/s3.config';
 import { v4 as uuid } from 'uuid';
 import { LikePostQueryInputsDto } from './post.dto';
-import { UpdateQuery } from 'mongoose';
+import { Types, UpdateQuery } from 'mongoose';
 
 export const postAvailability = (req: Request) => {
   return [
@@ -80,6 +80,76 @@ class PostService {
       message: 'Post created successfully',
       data: {},
     });
+  };
+
+  updatePost = async (req: Request, res: Response): Promise<Response> => {
+    const { postId } = req.params as unknown as { postId: Types.ObjectId };
+
+    const post = await this.postModel.findOne({
+      filter: { _id: postId, createdBy: req.user?._id },
+    });
+    if (!post) {
+      throw new NotFoundException('Post not found');
+    }
+
+    if (req.body.removedAttachments?.length && post.attachments?.length) {
+      post.attachments = post.attachments.filter((attachment: string) => {
+        if (!req.body.removedAttachments.includes(attachment)) {
+          return attachment;
+        }
+        return;
+      });
+    }
+
+    if (
+      req.body.tags?.length &&
+      (await this.userModel.find({ filter: { _id: { $in: req.body.tags } } }))
+        .length !== req.body.tags.length
+    ) {
+      throw new NotFoundException('One or more tagged users not found');
+    }
+
+    let attachments: string[] = [];
+    if (req.files?.length) {
+      attachments = await uploadFiles({
+        files: req.files as Express.Multer.File[],
+        path: `users/${post.createdBy}/post/${post.assetsFolderId}`,
+      });
+      post.attachments = [...(post.attachments || []), ...attachments];
+    }
+
+    const updatedPost = await this.postModel.updateOne({
+      filter: { _id: post._id },
+      update: {
+        content: req.body.content,
+        allowComments: req.body.allowComments || post.allowComments,
+        availability: req.body.availability || post.availability,
+
+        attachments: post.attachments,
+        // $addToSet: {
+        //   attachments: { $each: attachments || [] },
+        //   tags: { $each: req.body.tags || [] },
+        // },
+
+        // $pull: {
+        //   attachments: { $in: req.body.removedAttachments || [] },
+        //   tags: { $in: req.body.removedTags || [] },
+        // },
+      },
+    });
+
+    if (!updatedPost) {
+      if (attachments?.length) {
+        await deleteFiles({ urls: attachments });
+      }
+      throw new BadRequestException('Failed to update post');
+    } else {
+      if (req.body.removedAttachments?.length) {
+        await deleteFiles({ urls: req.body.removedAttachments });
+      }
+    }
+
+    return successResponse({ res });
   };
 
   likePost = async (req: Request, res: Response): Promise<Response> => {

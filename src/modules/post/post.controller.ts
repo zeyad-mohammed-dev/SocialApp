@@ -1,4 +1,4 @@
-import {postService} from './post.service';
+import { postService } from './post.service';
 import { validation } from '../../middlewares/validation.middleware';
 import * as validators from './post.validation';
 import { authentication } from '../../middlewares/authentication.middleware';
@@ -17,6 +17,14 @@ router.post(
   couldFileUpload({ validation: fileValidation.image }).array('attachments', 2),
   validation(validators.createPost),
   postService.createPost
+);
+
+router.patch(
+  '/:postId',
+  authentication(),
+  couldFileUpload({ validation: fileValidation.image }).array('attachments', 2),
+  validation(validators.updatePost),
+  postService.updatePost
 );
 
 router.patch(

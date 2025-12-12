@@ -73,7 +73,7 @@ export const generalFields = {
         originalname: z.string(),
         encoding: z.string(),
         mimetype: z.enum(mimetype),
-        buffer: z.string().optional(),
+        buffer: z.any().optional(),
         path: z.string().optional(),
         size: z.number(),
       })
