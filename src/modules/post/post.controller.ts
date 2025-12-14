@@ -8,14 +8,12 @@ import {
 } from '../../utils/multer/cloud.multer';
 
 import { Router } from 'express';
+import { commentRouter } from '../comment';
 
 const router = Router();
 
-router.get(
-  '/',
-  authentication(),
-  postService.postList
-);
+router.use('/:postId/comment', commentRouter);
+router.get('/', authentication(), postService.postList);
 
 router.post(
   '/',

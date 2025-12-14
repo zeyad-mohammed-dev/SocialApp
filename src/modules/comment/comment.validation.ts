@@ -1,0 +1,37 @@
+import z from 'zod';
+import { fileValidation } from '../../utils/multer/cloud.multer';
+import { generalFields } from '../../middlewares/validation.middleware';
+
+export const createComment = {
+  params: z.strictObject({ postId: generalFields.id }),
+  body: z
+    .strictObject({
+      content: z.string().min(2).max(500000).optional(),
+      attachments: z
+        .array(generalFields.file(fileValidation.image))
+        .max(2)
+        .optional(),
+
+      tags: z.array(generalFields.id).max(10).optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (!data.attachments?.length && !data.content) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['content'],
+          message: 'Either content or attachments must be provided',
+        });
+      }
+
+      if (
+        data.tags?.length &&
+        data.tags.length !== [...new Set(data.tags)].length
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['tags'],
+          message: 'Duplicated tagged users',
+        });
+      }
+    }),
+};
