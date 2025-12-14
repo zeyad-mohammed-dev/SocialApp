@@ -1,8 +1,9 @@
 import { model, models, HydratedDocument, Schema, Types } from 'mongoose';
+import { IPost } from './Post.model';
 
 export interface IComment {
   createdBy: Types.ObjectId;
-  postId: Types.ObjectId;
+  postId: Types.ObjectId | Partial<IPost>;
   commentId?: Types.ObjectId;
 
   content?: string;

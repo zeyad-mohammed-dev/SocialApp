@@ -18,4 +18,12 @@ router.post(
   commentService.createComment
 );
 
+router.post(
+  '/:commentId/reply',
+  authentication(),
+  couldFileUpload({ validation: fileValidation.image }).array('attachments', 2),
+  validation(validators.replyOnComment),
+  commentService.replyOnComment
+);
+
 export default router;

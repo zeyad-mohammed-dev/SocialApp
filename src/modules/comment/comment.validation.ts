@@ -1,6 +1,6 @@
 import z from 'zod';
 import { fileValidation } from '../../utils/multer/cloud.multer';
-import { generalFields } from '../../middlewares/validation.middleware';
+import { generalFields } from '../../middlewares';
 
 export const createComment = {
   params: z.strictObject({ postId: generalFields.id }),
@@ -34,4 +34,11 @@ export const createComment = {
         });
       }
     }),
+};
+
+export const replyOnComment = {
+  params: createComment.params.extend({
+    commentId: generalFields.id,
+  }),
+  body: createComment.body,
 };
