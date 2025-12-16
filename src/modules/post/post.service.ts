@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import { successResponse } from '../../utils/response/success.response';
-import { PostRepository, UserRepository } from '../../DB/repository';
+import {
+  CommentRepository,
+  PostRepository,
+  UserRepository,
+} from '../../DB/repository';
 import { UserModel } from '../../DB/models/User.model';
 import {
   AvailabilityEnum,
@@ -16,6 +20,7 @@ import { deleteFiles, uploadFiles } from '../../utils/multer/s3.config';
 import { v4 as uuid } from 'uuid';
 import { LikePostQueryInputsDto } from './post.dto';
 import { Types, UpdateQuery } from 'mongoose';
+import { CommentModel } from '../../DB';
 
 export const postAvailability = (req: Request) => {
   return [
@@ -35,6 +40,7 @@ export const postAvailability = (req: Request) => {
 class PostService {
   private userModel = new UserRepository(UserModel);
   private postModel = new PostRepository(PostModel);
+
   constructor() {}
 
   createPost = async (req: Request, res: Response): Promise<Response> => {
@@ -203,10 +209,36 @@ class PostService {
       filter: {
         $or: postAvailability(req),
       },
+      options: {
+        populate: [
+          {
+            path: 'comments',
+            match: {
+              commentId: { $exists: false },
+              freezedAt: { $exists: false },
+            },
+            populate: [
+              {
+                path: 'reply',
+                match: {
+                  commentId: { $exists: false },
+                  freezedAt: { $exists: false },
+                },
+                
+              },
+            ],
+          },
+        ],
+      },
       page,
       size,
     });
 
+    //   const posts = await this.postModel.findCursor({
+    //     filter: {
+    //       $or: postAvailability(req),
+    //     },
+    //   });
     return successResponse({ res, data: { posts } });
   };
 }

@@ -52,6 +52,8 @@ const commentSchema = new Schema<IComment>(
   {
     timestamps: true,
     strictQuery: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
@@ -75,6 +77,13 @@ commentSchema.pre(['findOneAndUpdate', 'updateOne'], function (next) {
   }
 
   next();
+});
+
+commentSchema.virtual('reply', {
+  localField: '_id',
+  foreignField: 'commentId',
+  ref: 'Comment',
+  justOne: true,
 });
 export const CommentModel =
   models.Comment || model<IComment>('Comment', commentSchema);

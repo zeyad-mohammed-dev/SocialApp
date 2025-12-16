@@ -79,6 +79,8 @@ const postSchema = new Schema<IPost>(
   {
     timestamps: true,
     strictQuery: true,
+    toObject: { virtuals: true },
+    toJSON: { virtuals: true },
   }
 );
 
@@ -102,5 +104,12 @@ postSchema.pre(['findOneAndUpdate', 'updateOne'], function (next) {
   }
 
   next();
+});
+
+postSchema.virtual('comments', {
+  localField: '_id',
+  foreignField: 'postId',
+  ref: 'Comment',
+  justOne: true,
 });
 export const PostModel = models.Post || model<IPost>('Post', postSchema);
