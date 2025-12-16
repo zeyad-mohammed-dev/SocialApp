@@ -17,6 +17,7 @@ import {
   UserRepository,
   TokenRepository,
   PostRepository,
+  FriendRequestRepository,
 } from '../../DB/repository';
 import { TokenModel } from '../../DB/models/Token.model';
 import { JwtPayload } from 'jsonwebtoken';
@@ -31,6 +32,7 @@ import {
 import { StorageEnum } from '../../utils/multer/cloud.multer';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   NotFoundException,
   UnauthorizedException,
@@ -43,13 +45,13 @@ import {
   IProfileResponse,
   IRefreshTokenResponse,
 } from './user.entities';
-import { PostModel } from '../../DB';
+import { FriendRequestModel, PostModel } from '../../DB';
 
 class UserServices {
   private userModel = new UserRepository(UserModel);
   private postModel = new PostRepository(PostModel);
+  private friendRequestModel = new FriendRequestRepository(FriendRequestModel);
 
-  private tokenModel = new TokenRepository(TokenModel);
   constructor() {}
 
   profile = async (req: Request, res: Response): Promise<Response> => {
@@ -85,6 +87,91 @@ class UserServices {
     if (!user) {
       throw new NotFoundException('user not found');
     }
+
+    return successResponse({ res });
+  };
+
+  sendFriendRequest = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    const { userId } = req.params as unknown as { userId: Types.ObjectId };
+
+    const checkFriendRequestExist = await this.friendRequestModel.findOne({
+      filter: {
+        createdBy: { $in: [req.user?._id, userId] },
+        sendTo: { $in: [req.user?._id, userId] },
+      },
+    });
+
+    if (checkFriendRequestExist) {
+      throw new ConflictException('friend request already exist');
+    }
+
+    const user = await this.userModel.findOne({
+      filter: {
+        _id: userId,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('invalid recipient user');
+    }
+
+    const [friendRequest] =
+      (await this.friendRequestModel.create({
+        data: [
+          {
+            createdBy: req.user?._id as Types.ObjectId,
+            sendTo: userId,
+          },
+        ],
+      })) || [];
+
+    if (!friendRequest) {
+      throw new BadRequestException('fail to create friend request');
+    }
+
+    return successResponse({ res, statusCode: 201 });
+  };
+
+  acceptFriendRequest = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    const { friendRequestId } = req.params as unknown as {
+      friendRequestId: Types.ObjectId;
+    };
+
+    const friendRequest = await this.friendRequestModel.findOneAndUpdate({
+      filter: {
+        _id: friendRequestId,
+        sendTo: req.user?._id,
+        acceptedAt: { $exists: false },
+      },
+      update: {
+        acceptedAt: new Date(),
+      },
+    });
+
+    if (!friendRequest) {
+      throw new NotFoundException('fail to find matching result');
+    }
+
+    await Promise.all([
+      await this.userModel.updateOne({
+        filter: { _id: friendRequest.createdBy },
+        update: {
+          $addToSet: { friends: friendRequest.sendTo },
+        },
+      }),
+      await this.userModel.updateOne({
+        filter: { _id: friendRequest.sendTo },
+        update: {
+          $addToSet: { friends: friendRequest.createdBy },
+        },
+      }),
+    ]);
 
     return successResponse({ res });
   };

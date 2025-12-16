@@ -21,6 +21,20 @@ router.get(
   userServices.dashboard
 );
 
+router.post(
+  '/:userId/send-friend-request',
+  authentication(),
+  validation(validators.sendFriendRequest),
+  userServices.sendFriendRequest
+);
+
+router.post(
+  '/accept-friend-request/:friendRequestId',
+  authentication(),
+  validation(validators.acceptFriendRequest),
+  userServices.acceptFriendRequest
+);
+
 router.patch(
   '/:userId/change-role',
   authorization(endpoint.changeRole),

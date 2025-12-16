@@ -9,11 +9,18 @@ export const logout = {
     flag: z.enum(LogoutEnum).default(LogoutEnum.only),
   }),
 };
-
-export const changeRole = {
+export const sendFriendRequest = {
   params: z.strictObject({
     userId: generalFields.id,
   }),
+};
+export const acceptFriendRequest = {
+  params: z.strictObject({
+    friendRequestId: generalFields.id,
+  }),
+};
+export const changeRole = {
+  params: sendFriendRequest.params,
   body: z.strictObject({
     role: z.enum(RoleEnum),
   }),
