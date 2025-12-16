@@ -13,7 +13,11 @@ import {
   createRevokedToken,
   LogoutEnum,
 } from '../../utils/security/token.security';
-import { UserRepository, TokenRepository } from '../../DB/repository';
+import {
+  UserRepository,
+  TokenRepository,
+  PostRepository,
+} from '../../DB/repository';
 import { TokenModel } from '../../DB/models/Token.model';
 import { JwtPayload } from 'jsonwebtoken';
 import {
@@ -39,9 +43,12 @@ import {
   IProfileResponse,
   IRefreshTokenResponse,
 } from './user.entities';
+import { PostModel } from '../../DB';
 
 class UserServices {
   private userModel = new UserRepository(UserModel);
+  private postModel = new PostRepository(PostModel);
+
   private tokenModel = new TokenRepository(TokenModel);
   constructor() {}
 
@@ -50,6 +57,36 @@ class UserServices {
       throw new UnauthorizedException('user not authenticated');
     }
     return successResponse<IProfileResponse>({ res, data: { user: req.user } });
+  };
+
+  dashboard = async (req: Request, res: Response): Promise<Response> => {
+    const result = await Promise.allSettled([
+      this.userModel.find({ filter: {} }),
+      this.postModel.find({ filter: {} }),
+    ]);
+    return successResponse({ res, data: { result } });
+  };
+
+  changeRole = async (req: Request, res: Response): Promise<Response> => {
+    const { userId } = req.params as unknown as { userId: Types.ObjectId };
+    const { role }: { role: RoleEnum } = req.body;
+
+    let denyRoles: RoleEnum[] = [role, RoleEnum.superAdmin];
+
+    if (req.user?.role === RoleEnum.admin) {
+      denyRoles.push(RoleEnum.admin);
+    }
+
+    const user = await this.userModel.findOneAndUpdate({
+      filter: { _id: userId as Types.ObjectId, role: { $nin: denyRoles } },
+      update: { role },
+    });
+
+    if (!user) {
+      throw new NotFoundException('user not found');
+    }
+
+    return successResponse({ res });
   };
 
   freezeAccount = async (req: Request, res: Response): Promise<Response> => {

@@ -1,6 +1,8 @@
+import { generalFields } from './../../middlewares/validation.middleware';
 import { z } from 'zod';
 import { LogoutEnum } from '../../utils/security/token.security';
 import { Types } from 'mongoose';
+import { RoleEnum } from '../../DB';
 
 export const logout = {
   body: z.strictObject({
@@ -8,6 +10,14 @@ export const logout = {
   }),
 };
 
+export const changeRole = {
+  params: z.strictObject({
+    userId: generalFields.id,
+  }),
+  body: z.strictObject({
+    role: z.enum(RoleEnum),
+  }),
+};
 export const freezeAccount = {
   params: z
     .object({

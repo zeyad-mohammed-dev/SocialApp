@@ -15,6 +15,19 @@ const router = Router();
 
 router.get('/', authentication(), userServices.profile);
 
+router.get(
+  '/dashboard',
+  authorization(endpoint.dashboard),
+  userServices.dashboard
+);
+
+router.patch(
+  '/:userId/change-role',
+  authorization(endpoint.changeRole),
+  validation(validators.changeRole),
+  userServices.changeRole
+);
+
 router.post(
   '/refresh-token',
   authentication(TokenEnum.refresh),
