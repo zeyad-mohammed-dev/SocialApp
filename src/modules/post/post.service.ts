@@ -224,7 +224,15 @@ class PostService {
                   commentId: { $exists: false },
                   freezedAt: { $exists: false },
                 },
-                
+                populate: [
+                  {
+                    path: 'reply on reply',
+                    match: {
+                      commentId: { $exists: false },
+                      freezedAt: { $exists: false },
+                    },
+                  },
+                ],
               },
             ],
           },

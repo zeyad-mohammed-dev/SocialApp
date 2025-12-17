@@ -1,12 +1,13 @@
 import { EventEmitter } from 'node:events';
 import { deleteFile, getFile } from '../multer/s3.config';
-import { UserModel } from '../../DB/models/User.model';
+import { HUserDocument, UserModel } from '../../DB/models/User.model';
 import { UserRepository } from '../../DB/repository';
+import { UpdateQuery } from 'mongoose';
 
 export const s3Event = new EventEmitter();
 
 s3Event.on('trackProfileImage', (data) => {
-  console.log(data);
+  // console.log(data);
 
   setTimeout(async () => {
     const userModel = new UserRepository(UserModel);
@@ -17,13 +18,17 @@ s3Event.on('trackProfileImage', (data) => {
         update: { $unset: { temProfileImage: 1 } },
       });
       await deleteFile({ Key: data.oldKey });
-      console.log('Done 🌺👌🏻');
+      // console.log('Done 🌺👌🏻');
     } catch (error: any) {
-      console.log(error.Code);
+      let unsetData: UpdateQuery<HUserDocument> = { temProfileImage: 1 };
+      if (!data.oldKey) {
+        unsetData = { temProfileImage: 1, profileImage: 1 };
+      }
+      // console.log(error.Code);
       if (error.Code === 'NoSuchKey') {
         await userModel.updateOne({
           filter: { _id: data.userId },
-          update: { profileImage: data.oldKey, $unset: { temProfileImage: 1 } },
+          update: { profileImage: data.oldKey, $unset: unsetData },
         });
       }
     }

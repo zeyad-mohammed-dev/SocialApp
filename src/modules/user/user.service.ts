@@ -55,10 +55,21 @@ class UserServices {
   constructor() {}
 
   profile = async (req: Request, res: Response): Promise<Response> => {
-    if (!req.user) {
-      throw new UnauthorizedException('user not authenticated');
+    const profile = await this.userModel.findById({
+      id: req.user?._id as Types.ObjectId,
+      options: {
+        populate: [
+          {
+            path: 'friends',
+            select: 'firstName lastName email gender profileImage',
+          },
+        ],
+      },
+    });
+    if (!profile) {
+      throw new NotFoundException('fail to fetch user profile');
     }
-    return successResponse<IProfileResponse>({ res, data: { user: req.user } });
+    return successResponse<IProfileResponse>({ res, data: { user: profile } });
   };
 
   dashboard = async (req: Request, res: Response): Promise<Response> => {
